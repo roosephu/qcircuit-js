@@ -4,20 +4,41 @@ dist = 60
 U_size = 40
 C_size = 30
 D_size = 12
+clog "ck"
 
 init_grids = ->
         for i in [1 .. 4] 
                 draw.line(0, i * dist, 4 * dist, i * dist).stroke
                         width: 2
 
+window.ops = []
+ops = window.ops
+
+init_op = [
+        ['line', 1, 1, 3],
+        ['line', 2, 1, 4],
+        ['line', 3, 1, 3],
+        ['black-dot', 1, 1],
+        ['black-dot', 2, 2],
+        ['black-dot', 3, 2],
+        ['white-dot', 3, 3],
+        ['black-dot', 4, 2], 
+        ['oplus', 1, 2],
+        ['oplus', 3, 1],
+        ['text', 1, 3, 'U'],
+]
+
 class Painter
-        constructor: (@draw) ->
+        constructor: (@draw, @ops) ->
                 # clog 'construct'
 
         black_dot: (x, y) ->
-                # clog "infunc: #{x} #{y}"
-                # clog 'black-dot', x, y
                 draw.circle(D_size).move(y * dist - D_size / 2, x * dist - D_size / 2)
+        white_dot: (x, y) ->
+                draw.circle(D_size).move(y * dist - D_size / 2, x * dist - D_size / 2).attr
+                        'stroke-width': 2
+                        'fill': 'white'
+                        'fill-opacity': 1
         oplus: (x, y) ->
                 draw.circle(C_size).move(y * dist - C_size / 2, x * dist - C_size / 2).attr
                         'stroke-width': 2
@@ -35,14 +56,16 @@ class Painter
                         'fill': 'white'
                         'fill-opacity': 1
                 draw.image("http://frog.isima.fr/cgi-bin/bruno/tex2png--10.cgi?" + txt, 20, 20).move(y * dist - 10, x * dist - 10)
-        add: (op) ->
+        add: (op, p) ->
                 cmd = op[0]
+                if p
+                        ops.push op
                 if cmd == 'black-dot'
                         [x, y] = op[1 .. 2]
                         this.black_dot x, y
                 else if cmd == 'white-dot'
-                        # x, y = op[1 .. 2]
-                        clog 'white-dot unfinished'
+                        [x, y] = op[1 .. 2]
+                        this.white_dot x, y
                 else if cmd == 'line'
                         [c, x, y] = op[1 .. 3]
                         this.line c, x, y
@@ -53,31 +76,17 @@ class Painter
                         [x, y, txt] = op[1 .. 3]
                         this.text x, y, txt
         
-
 D = new Painter draw
-
-window.ops = [
-        ['line', 1, 1, 3],
-        ['line', 2, 1, 4],
-        ['line', 3, 1, 3],
-        ['black-dot', 1, 1],
-        ['black-dot', 2, 2],
-        ['black-dot', 3, 2],
-        ['black-dot', 3, 3],
-        ['black-dot', 4, 2], 
-        ['oplus', 1, 2],
-        ['oplus', 3, 1],
-        ['text', 1, 3, 'U'],
-]
-ops = window.ops
 
 dashed_box = null
 redraw = () ->
-        # clog 'redraw' + ops
+        clog 'redraw' + ops
         draw.clear()
         init_grids()
         for op in ops
-                D.add op
+                D.add op, false
+for op in init_op
+        D.add op, true
 redraw()
 
 locate_mouse = (x, y) ->
@@ -133,7 +142,7 @@ window.add_black_dot = () ->
         func = (arg) ->
                 [x, y] = arg[0][0][0]
                 clog "black dot: #{x} #{y}"
-                D.add ['black-dot', x, y]
+                D.add ['black-dot', x, y], true
         Q.bind func, 1
 
 clog 'init done'
