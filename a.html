@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8">
+    <title>Qcircuit Demo</title>
+    <script type="text/javascript" src="coffee-script.js"> </script>
+    <script type="text/javascript" src="svg.min.js"></script>
+    <script type="text/javascript" src="svg.foreignobject.js"></script>
+    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.2.6/jquery.js"></script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        TeX: {equationNumbers: {autoNumber: ["AMS"], useLabelIds: true}},
+        "HTML-CSS": {linebreaks: {automatic: true}},
+        SVG: {linebreaks: {automatic: true}}
+    });
+</script>
+
+  </head>
+  <body>
+    <div id="drawing"></div>
+    <script type="text/coffeescript" src="a.coffee"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <button onclick="cancel_op()">Cancel</button>
+    <button onclick="add_black_dot()">Add Black dot</button>
+  </body>
+</html>
+
