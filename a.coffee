@@ -1,83 +1,152 @@
 clog = console.log
 draw = SVG('drawing').size('400', '400')
-dist = 60
-U_size = 40
-C_size = 30
-D_size = 12
-# clog "ck"
-
-init_grids = ->
-        for i in [1 .. 6] 
-                draw.line(0, i * dist, 6 * dist, i * dist).stroke
-                        width: 2
-
 window.ops = []
 ops = window.ops
 
 init_op = [
-        ['line', 1, 1, 3],
-        ['line', 2, 1, 4],
-        ['line', 3, 1, 3],
-        ['black-dot', 1, 1],
-        ['black-dot', 2, 2],
-        ['black-dot', 3, 2],
-        ['white-dot', 3, 3],
-        ['black-dot', 4, 2], 
-        ['targ', 1, 2],
-        ['targ', 3, 1],
-        ['gate', 1, 3, 'U'],
-        ['qswap', 4, 1],
+        # ['line', 1, 1, 3],
+        # ['line', 2, 1, 4],
+        # ['line', 3, 1, 3],
+        # ['black-dot', 1, 1],
+        # ['black-dot', 2, 2],
+        # ['black-dot', 3, 2],
+        # ['white-dot', 3, 3],
+        # ['black-dot', 4, 2], 
+        # ['targ', 1, 2],
+        # ['targ', 3, 1],
+        # ['gate', 1, 3, 'U'],
+        # ['qswap', 4, 1],
 ]
+
+class Axis
+        constructor: (@default, cnt) ->
+                @dx = [0]
+                for i in [1 .. cnt]
+                        @dx.push @default
+                @sum = (x, y) -> x + y
+                this.upd_xs()
+                # clog "drdrd #{@dx}"
+
+        upd_xs: () ->
+                @last = 0
+                @xs = []
+                @rep = []
+                cnt = 0
+                for i in @dx
+                        for x in [0 .. i - 1]
+                                @rep.push cnt
+                        @last += i
+                        @xs.push @last
+                        cnt += 1
+                clog "xs: #{@xs}"
+                        
+        set_default: (@default) ->
+
+        set: (col, width) ->
+                @dx[col] = width
+
+        left: (x) ->
+                if x > @xs.length
+                        x = @xs.length
+                return @xs[x - 1]
+
+        right: (x) ->
+                if x >= @xs.length
+                        x = @xs.length - 1
+                return @xs[x]
+                
+        center: (x) ->
+                return @dx[x] / 2 + @xs[x - 1]
+
+        locate: (x) ->
+                if x >= @last
+                        return @xs.length
+                return @rep[x]
+
+sz_cfg =
+        'circle': 12
+        'gate': 40
+        'target': 30
+        'qswap': 5
+
+X = new Axis 60, 10
+Y = new Axis 60, 10
+
+center = (x, y) ->
+        clog "center #{x} #{y} #{X.center(x)} #{Y.center(y)}"
+        return [X.center(x), Y.center(y)]
 
 class Painter
         constructor: (@draw, @ops) ->
                 # clog 'construct'
 
         black_dot: (x, y) ->
-                draw.circle(D_size).move(y * dist - D_size / 2, x * dist - D_size / 2)
+                rad = sz_cfg['circle'] / 2
+                [xc, yc] = center x, y
+                clog "black-dot #{xc} #{yc} #{x} #{y}"
+                draw.circle(rad * 2).move(yc - rad, xc - rad)
         white_dot: (x, y) ->
-                draw.circle(D_size).move(y * dist - D_size / 2, x * dist - D_size / 2).attr
+                rad = sz_cfg['circle'] / 2
+                [xc, yc] = center x, y
+                draw.circle(rad * 2).move(yc - rad, xc - rad).attr
                         'stroke-width': 2
                         'fill': 'white'
                         'fill-opacity': 1
         targ: (x, y) ->
-                draw.circle(C_size).move(y * dist - C_size / 2, x * dist - C_size / 2).attr
+                rad = sz_cfg['target'] / 2
+                [xc, yc] = center x, y
+                draw.circle(rad * 2).move(yc - rad, xc - rad).attr
                         'stroke-width': 2
                         'fill-opacity': 0
-                draw.line(y * dist - C_size / 2, x * dist, y * dist + C_size / 2, x * dist).stroke
+                draw.line(yc - rad, xc, yc + rad, xc).stroke
                         width: 1
-                draw.line(y * dist, x * dist - C_size / 2, y * dist, x * dist + C_size / 2).stroke
+                draw.line(yc, xc - rad, yc, xc + rad).stroke
                         width: 1
 
-        fix_line: (c, L, R) ->
+        fix_line: (x1, y1, x2, y2) ->
                 for op in ops
                         cmd = op[0]
-                        if cmd in ['black-dot', 'white-dot', 'targ', 'gate', 'multigate']
+                        if cmd in ['black-dot', 'white-dot', 'targ', 'gate']
                                 [x, y] = op[1 .. 2]
-                                if y == c and ((L <= x <= R) or (L >= x >= R))
+                                if ((x1 <= x <= x2) or (x1 >= x >= x2)) and ((y1 <= y <= y2) or (y1 >= y >= y2))
                                         this.add op, false
-        line: (c, x, y) ->
-                draw.line(c * dist, x * dist, c * dist, y * dist).stroke
+                        else if cmd == 'multigate'
+                                this.add op, false
+                                        
+        line: (x1, y1, x2, y2) ->
+                [x1c, y1c] = center x1, y1
+                [x2c, y2c] = center x2, y2
+                draw.line(y1c, x1c, y2c, x2c).stroke
                         width: 1
-                this.fix_line c, x, y
+                this.fix_line x1, y1, x2, y2
         qswap: (x, y) ->
-                draw.line(y * dist - 5, x * dist - 5, y * dist + 5, x * dist + 5).stroke
+                d = sz_cfg['qswap']
+                [xc, yc] = center x, y
+                draw.line(yc - d, xc - d, yc + d, xc + d).stroke
                         width: 3
-                draw.line(y * dist + 5, x * dist - 5, y * dist - 5, x * dist + 5).stroke
+                draw.line(yc + d, xc - d, yc - d, xc + d).stroke
                         width: 3
         gate: (x, y, txt) ->
-                draw.rect(U_size, U_size).move(y * dist - U_size / 2, x * dist - U_size / 2).attr
+                d = sz_cfg['gate'] / 2
+                [xc, yc] = center x, y
+                draw.rect(d * 2, d * 2).move(yc - d, xc - d).attr
                         'stroke': 'black'
                         'fill': 'white'
                         'fill-opacity': 1
-                draw.image("http://frog.isima.fr/cgi-bin/bruno/tex2png--10.cgi?" + txt, 20, 20).move(y * dist - 10, x * dist - 10)
+                draw.image("http://frog.isima.fr/cgi-bin/bruno/tex2png--10.cgi?" + txt, d, d).move(yc - d / 2, xc - d / 2)
         multigate: (c, x, y, txt) ->
                 # clog "#{c}, #{x}, #{y}, #{txt}"
-                draw.rect(U_size, U_size + dist * Math.abs(y - x)).move(c * dist - U_size / 2, Math.min(x, y) * dist - U_size / 2).attr
+                if y < x
+                        [x, y] = [y, x]
+                d = sz_cfg['gate'] / 2
+                xc = Y.center(c)
+                lc = X.center(y)
+                uc = X.center(x)
+                draw.rect(d * 2, d * 2 + lc - uc).move(xc - d, uc - d).attr
                         'stroke': 'black'
                         'fill': 'white'
                         'fill-opacity': 1
-                draw.image("http://frog.isima.fr/cgi-bin/bruno/tex2png--10.cgi?" + txt, 20, 20).move(c * dist - 10, (x + y) / 2 * dist - 10)
+                draw.image("http://frog.isima.fr/cgi-bin/bruno/tex2png--10.cgi?" + txt, d, d).move(xc - 10, (lc + uc) / 2 - 10)
                 
         add: (op, p) ->
                 cmd = op[0]
@@ -90,8 +159,8 @@ class Painter
                         [x, y] = op[1 .. 2]
                         this.white_dot x, y
                 else if cmd == 'line'
-                        [c, x, y] = op[1 .. 3]
-                        this.line c, x, y
+                        [x1, y1, x2, y2] = op[1 .. 4]
+                        this.line x1, y1, x2, y2
                 else if cmd == 'targ'
                         [x, y] = op[1 .. 2]
                         this.targ x, y
@@ -110,7 +179,7 @@ D = new Painter draw
 dashed_box = null
 redraw = () ->
         draw.clear()
-        init_grids()
+        # init_grids()
         for op in ops
                 D.add op, false
 for op in init_op
@@ -118,11 +187,12 @@ for op in init_op
 redraw()
 
 locate_mouse = (x, y) ->
-        [Math.floor(y / dist + 0.5), Math.floor(x / dist + 0.5)]
+        # clog "#{x} #{y} #{X.locate(x)} #{Y.locate(Y)}"
+        return [Y.locate(y), X.locate(x)]
 
 window.cancel_op = () ->
         if ops.length == 0
-                # clog 'empty operation!'
+                clog 'empty operation!'
         else 
                 ops = ops[0 .. -2]
                 redraw()
@@ -140,8 +210,11 @@ class QueueEvent
                         @func(@Q[0 .. @cnt - 1])
                         @Q = []
                         @func = null
+                clog "Queue Length #{@Q.length}"
+                $("#QLen").val("#{@Q.length} drd")
         bind: (@func, @cnt) ->
                 @Q = []
+                $("#QLen").val("#{@Q.length} rdr")
                 # clog "new bind: #{@cnt}"
 
 window.Q = new QueueEvent
@@ -154,8 +227,12 @@ drawer_dom.onmousemove = (event) ->
         if dashed_box
                 dashed_box.remove()
         [Bx, By] = locate_mouse x, y
-        # clog "box: " + Bx + " " + By
-        dashed_box = draw.rect(dist, dist).move(By * dist - dist / 2, Bx * dist - dist / 2).attr
+        x1 = X.left(Bx)
+        x2 = X.right(Bx)
+        y1 = Y.left(By)
+        y2 = Y.right(By)
+        clog "#{Bx} #{By}"
+        dashed_box = draw.rect(y2 - y1, x2 - x1).move(y1, x1).attr
                 'stroke': 'black'
                 'stroke-dasharray': [2, 2]
                 'fill': 'white'
@@ -210,10 +287,19 @@ window.add_line = () ->
         func = (arg) ->
                 [x1, y1] = arg[0]
                 [x2, y2] = arg[1]
-                if y1 == y2
-                        D.add ['line', y1, x1, x2], true
-                # else x1 == x2
-                #         D.add []
+                if y1 == y2 or x1 == x2
+                        D.add ['line', x1, y1, x2, y2], true
         Q.bind func, 2
+
+clog "rdr #{X.locate(301)}"
+
+export_to_latex = () ->
+
+
+$ ->
+    $("table").tableresizer 
+        row_border: "2px solid #CCC"
+        col_border: "2px solid #000"
+tab = $("#table")
 
 # clog 'init done'
