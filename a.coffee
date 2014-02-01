@@ -47,9 +47,18 @@ class Painter
                         width: 1
                 draw.line(y * dist, x * dist - C_size / 2, y * dist, x * dist + C_size / 2).stroke
                         width: 1
+
+        fix_line: (c, L, R) ->
+                for op in ops
+                        cmd = op[0]
+                        if cmd in ['black-dot', 'white-dot', 'oplus', 'text']
+                                [x, y] = op[1 .. 2]
+                                if y == c and ((L <= x <= R) or (L >= x >= R))
+                                        this.add op, false
         line: (c, x, y) ->
                 draw.line(c * dist, x * dist, c * dist, y * dist).stroke
                         width: 1
+                this.fix_line c, x, y
         text: (x, y, txt) ->
                 draw.rect(U_size, U_size).move(y * dist - U_size / 2, x * dist - U_size / 2).attr
                         'stroke': 'black'
@@ -80,7 +89,6 @@ D = new Painter draw
 
 dashed_box = null
 redraw = () ->
-        clog 'redraw' + ops
         draw.clear()
         init_grids()
         for op in ops
@@ -104,15 +112,17 @@ class QueueEvent
                 @Q = []
                 @func = null
                 @cnt = 0
-        push: (args...) ->
-                @Q.push [args]
-                clog "QE" + @Q
+        push: (args) ->
+                # clog "start #{@Q} #{@Q.length}"
+                @Q.push args
                 if @Q.length >= @cnt and @func
+                        # clog "start #{@Q} #{@cnt}"
                         @func(@Q[0 .. @cnt - 1])
                         @Q = []
-                        func = null
+                        @func = null
         bind: (@func, @cnt) ->
                 @Q = []
+                clog "new bind: #{@cnt}"
 
 window.Q = new QueueEvent
 Q = window.Q
@@ -135,14 +145,36 @@ clog drawer_dom
 drawer_dom.onclick = (event) ->
         x = parseInt event.clientX
         y = parseInt event.clientY
-        [Bx, By] = 
         Q.push locate_mouse x, y
 
 window.add_black_dot = () ->
         func = (arg) ->
-                [x, y] = arg[0][0][0]
-                clog "black dot: #{x} #{y}"
+                [x, y] = arg[0]
+                # clog "black dot: #{x} #{y}"
                 D.add ['black-dot', x, y], true
         Q.bind func, 1
+
+window.add_white_dot = () ->
+        func = (arg) ->
+                [x, y] = arg[0]
+                D.add ['white-dot', x, y], true
+        Q.bind func, 1
+
+window.add_oplus = () ->
+        func = (arg) ->
+                [x, y] = arg[0]
+                D.add ['oplus', x, y], true
+        Q.bind func, 1
+
+window.add_line = () ->
+        func = (arg) ->
+                # clog "drd"
+                [x1, y1] = arg[0]
+                # clog "drdrd #{arg[1]}"
+                [x2, y2] = arg[1]
+                # clog "bug? #{x1}, #{y1}, #{x2}, #{y2}"
+                if y1 == y2
+                        D.add ['line', y1, x1, x2], true
+        Q.bind func, 2
 
 clog 'init done'
