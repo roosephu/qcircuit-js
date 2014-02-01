@@ -4,7 +4,7 @@ dist = 60
 U_size = 40
 C_size = 30
 D_size = 12
-clog "ck"
+# clog "ck"
 
 init_grids = ->
         for i in [1 .. 6] 
@@ -72,7 +72,7 @@ class Painter
                         'fill-opacity': 1
                 draw.image("http://frog.isima.fr/cgi-bin/bruno/tex2png--10.cgi?" + txt, 20, 20).move(y * dist - 10, x * dist - 10)
         multigate: (c, x, y, txt) ->
-                clog "#{c}, #{x}, #{y}, #{txt}"
+                # clog "#{c}, #{x}, #{y}, #{txt}"
                 draw.rect(U_size, U_size + dist * Math.abs(y - x)).move(c * dist - U_size / 2, Math.min(x, y) * dist - U_size / 2).attr
                         'stroke': 'black'
                         'fill': 'white'
@@ -122,7 +122,7 @@ locate_mouse = (x, y) ->
 
 window.cancel_op = () ->
         if ops.length == 0
-                clog 'empty operation!'
+                # clog 'empty operation!'
         else 
                 ops = ops[0 .. -2]
                 redraw()
@@ -142,7 +142,7 @@ class QueueEvent
                         @func = null
         bind: (@func, @cnt) ->
                 @Q = []
-                clog "new bind: #{@cnt}"
+                # clog "new bind: #{@cnt}"
 
 window.Q = new QueueEvent
 Q = window.Q
@@ -160,7 +160,7 @@ drawer_dom.onmousemove = (event) ->
                 'stroke-dasharray': [2, 2]
                 'fill': 'white'
                 'fill-opacity': 0
-clog drawer_dom
+# clog drawer_dom
 
 drawer_dom.onclick = (event) ->
         x = parseInt event.clientX
@@ -212,6 +212,8 @@ window.add_line = () ->
                 [x2, y2] = arg[1]
                 if y1 == y2
                         D.add ['line', y1, x1, x2], true
+                # else x1 == x2
+                #         D.add []
         Q.bind func, 2
 
-clog 'init done'
+# clog 'init done'
