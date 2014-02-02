@@ -63,7 +63,7 @@ center = (x, y) ->
         # clog "center #{x} #{y} #{X.center(x)} #{Y.center(y)}"
         return [X.center(x), Y.center(y)]
 
-class QCircuit_black_dot
+class Qcircuit_black_dot
         constructor: (@x1, @y1, @x2, @y2) ->
                 @type = 'black-dot'
         draw: (svg) ->
@@ -76,7 +76,7 @@ class QCircuit_black_dot
         apply: (map) ->
                 map[@x1][@y1] += "\\ctrl{#{@x2 - @x1}}"
 
-class QCircuit_white_dot
+class Qcircuit_white_dot
         constructor: (@x1, @y1, @x2, @y2) ->
                 @type = 'white-dot'
         draw: (svg) ->
@@ -92,7 +92,7 @@ class QCircuit_white_dot
         apply: (map) ->
                 map[@x1][@y1] += "\\ctrlo{#{@x2 - @x1}} "
 
-class QCircuit_target
+class Qcircuit_target
         constructor: (@x, @y) ->
                 @type = 'target'
         draw: (svg) ->
@@ -108,7 +108,7 @@ class QCircuit_target
         apply: (map) ->
                 map[@x][@y] += "\\targ "
 
-class QCircuit_line
+class Qcircuit_line
         constructor: (@x1, @y1, @x2, @y2) ->
                 @type = 'line'
         draw: (svg) ->
@@ -122,7 +122,7 @@ class QCircuit_line
                 for x in [x1 .. x2]
                         for y in [y1 .. y2]
                                 map[x][y] += "\\qw "
-class QCircuit_qswap
+class Qcircuit_qswap
         constructor: (@x, @y) ->
                 @type = 'qswap'
         draw: (svg) ->
@@ -135,7 +135,7 @@ class QCircuit_qswap
         apply: (map) ->
                 map[@x][@y] += "\\qswap "
 
-class QCircuit_gate
+class Qcircuit_gate
         constructor: (@x, @y, @txt) ->
                 @type = 'gate'
                 if @y < @x
@@ -151,7 +151,7 @@ class QCircuit_gate
         apply: (map) ->
                 map[@x][@y] += "\\gate{#{@txt}}"
 
-class QCircuit_multigate
+class Qcircuit_multigate
         constructor: (@c, @x, @y, @txt) ->
                 if @x > @y
                         [@x, @y] = [@y, @x]
@@ -171,7 +171,21 @@ class QCircuit_multigate
                 for d in [@x + 1 .. @y]
                         map[d][@c] += "\\ghost{#{@txt}}"
 
-class QCircuit_component
+class Qcircuit_label
+        constructor: (@x, @y, @io, @dirac, @txt) ->
+                if @dirac == 'ket'
+                        @tex = "\\left\\vert#{@txt}\\right\\rangle"
+                else 
+                        @tex = "\\left\\langle#{@txt}\\right\\vert"
+        draw: (svg) ->
+                d = sz_cfg['gate'] / 2
+                [xc, yc] = center @x, @y
+                svg.image("http://frog.isima.fr/cgi-bin/bruno/tex2png--10.cgi?" + @tex, d * 2, d * 2).move(yc - d, xc - d)
+        apply: (map) ->
+                io_tex = if @io == "i" then "lstick" else "rstick"
+                map[@x][@y] += "\\#{io_tex}{\\#{@dirac}{#{@txt}}}"
+
+class Qcircuit_component
         constructor: () ->
                 @components = []
         fix_cover: () ->
@@ -188,17 +202,7 @@ class QCircuit_component
                 @components.push comp
                 this.redraw() if redraw
 
-QC = new QCircuit_component
-
-# for c in [
-#         new QCircuit_black_dot(1, 1, 2, 1),
-#         new QCircuit_black_dot(2, 2, 3, 2),
-#         new QCircuit_target(1, 2),
-#         new QCircuit_target(3, 1),
-#         new QCircuit_gate(1, 3, 'U'),
-#         new QCircuit_qswap(4, 1), ]
-#         QC.add c, false
-# QC.redraw()
+QC = new Qcircuit_component
 
 dashed_box = null
 locate_mouse = (x, y) ->
@@ -238,8 +242,9 @@ Q = new QueueEvent
 drawer = $("#drawing")
 
 get_cur_rel_pos = (event) ->
-        x = parseInt(event.pageX) - drawer.position().top
-        y = parseInt(event.pageY) - drawer.position().left
+        # clog "#{event.pageX} - #{drawer.position().left}"
+        x = parseInt(event.pageX) - drawer.position().left
+        y = parseInt(event.pageY) - drawer.position().top
         return [x, y]
 
 click_event = (event) ->
@@ -251,8 +256,7 @@ drawer.click click_event
 drawer.mousemove (event) ->
         [x, y] = get_cur_rel_pos event
         $("#mouse-position").text "#{x} #{y}"
-        if dashed_box
-                dashed_box.remove()
+        dashed_box.remove() if dashed_box
         [Bx, By] = locate_mouse x, y
         x1 = X.left(Bx)
         x2 = X.right(Bx)
@@ -264,8 +268,6 @@ drawer.mousemove (event) ->
                 draw.line(Y1, X1, Y2, X2).addTo(dashed_box).attr
                         'stroke': 'black'
                         "stroke-dasharray": [2, 2]
-# clog drawer_dom
-
 drawer.css
         position: "absolute"
 
@@ -274,7 +276,7 @@ window.add_black_dot = () ->
                 [x1, y1] = arg[0]
                 [x2, y2] = arg[1]
                 if y1 == y2
-                        QC.add new QCircuit_black_dot x1, y1, x2, y2
+                        QC.add new Qcircuit_black_dot x1, y1, x2, y2
         Q.bind func, 2
 
 window.add_white_dot = () ->
@@ -282,25 +284,25 @@ window.add_white_dot = () ->
                 [x1, y1] = arg[0]
                 [x2, y2] = arg[1]
                 if y1 == y2
-                        QC.add new QCircuit_white_dot x1, y1, x2, y2
+                        QC.add new Qcircuit_white_dot x1, y1, x2, y2
         Q.bind func, 2
 
 window.add_targ = () ->
         func = (arg) ->
                 [x, y] = arg[0]
-                QC.add new QCircuit_target x, y
+                QC.add new Qcircuit_target x, y
         Q.bind func, 1
 
 window.add_qswap = () ->
         func = (arg) ->
                 [x, y] = arg[0]
-                QC.add new QCircuit_qswap x, y
+                QC.add new Qcircuit_qswap x, y
         Q.bind func, 1
 
 window.add_gate = () ->
         func = (arg) ->
                 [x, y] = arg[0]
-                QC.add new QCircuit_gate x, y, $('#gate').val()
+                QC.add new Qcircuit_gate x, y, $('#gate').val()
         Q.bind func, 1
 
 window.add_multigate = () ->
@@ -308,7 +310,7 @@ window.add_multigate = () ->
                 [x1, y1] = arg[0]
                 [x2, y2] = arg[1]
                 if y1 == y2
-                        QC.add new QCircuit_multigate y1, x1, x2, $('#gate').val()
+                        QC.add new Qcircuit_multigate y1, x1, x2, $('#gate').val()
         Q.bind func, 2
 
 window.add_line = () ->
@@ -316,10 +318,19 @@ window.add_line = () ->
                 [x1, y1] = arg[0]
                 [x2, y2] = arg[1]
                 if y1 == y2 or x1 == x2
-                        QC.add new QCircuit_line x1, y1, x2, y2
+                        QC.add new Qcircuit_line x1, y1, x2, y2
         Q.bind func, 2
 
-class QCircuitGrid
+window.add_label = () ->
+        func = (arg) ->
+                [x, y] = arg[0]
+                # clog "" + $("#label-io").prop("checked") + " " + $("#label-dirac").attr('checked')
+                io = if $("#label-io").prop("checked") then "o" else "i"
+                dirac = if $("#label-dirac").prop("checked") then "bra" else "ket"
+                QC.add new Qcircuit_label x, y, io, dirac, $('#gate').val()
+        Q.bind func, 1
+
+class QcircuitGrid
         constructor: (@rows, @cols) ->
                 @map = []
                 for i in [1 .. @rows]
@@ -344,7 +355,7 @@ class QCircuitGrid
 
 window.export_to_latex = () ->
         clog "rc: #{rows} #{cols}"
-        grid = new QCircuitGrid rows, cols
+        grid = new QcircuitGrid rows, cols
         grid.imp_ops QC.components
         $('#latex-code').text grid.exp_tex()
 
@@ -353,13 +364,13 @@ mk_table = ->
         rem = 20
         for i in [0 .. rows]
                 h = if i == 0 then rem else X.get(i)
-                s = "<tr height=#{h - 2}px>"
+                s = "<tr height=#{h - 1}px>"
                 for j in [0 .. cols]
                         elem = if i == 0 then "th" else "td"
                         style = if j == 0 then 'style="border-right: 2px solid #CCC"' else ""
                         w = if j == 0 then rem else Y.get(j)
                         inner = if (i == 0 and j > 0) or (i > 0 and j == 0) then i + j else ""
-                        s += "<#{elem} width=#{w - 4}px #{style}> #{inner} </#{elem}>"
+                        s += "<#{elem} width=#{w}px #{style}> #{inner} </#{elem}>"
                 s += '</tr>'
                 tab.append(s)
         tab.tableresizer

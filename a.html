@@ -3,12 +3,13 @@
   <head>
     <meta charset="utf-8">
     <title>Qcircuit Demo</title>
-    <script type="text/javascript" src="coffee-script.js"> </script>
-    <script type="text/javascript" src="svg.min.js"></script>
-    <script type="text/javascript" src="svg.foreignobject.js"></script>
-    <script type="text/javascript" src="jquery.min.js"></script>
-    <script type="text/javascript" src="jquery.tableresizer.js"></script>
+    <script type="text/javascript" src="assets/js/coffee-script.js"> </script>
+    <script type="text/javascript" src="assets/js/svg.min.js"></script>
+    <script type="text/javascript" src="assets/js/svg.foreignobject.js"></script>
+    <script type="text/javascript" src="assets/js/jquery.min.js"></script>
+    <script type="text/javascript" src="assets/js/jquery.tableresizer.js"></script>
     <style type="text/css">th {border-bottom: 3px solid #CCC;} </style>
+    <link href="assets/css/bootstrap.min.css" rel="stylesheet">
     <!-- <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script> -->
 
 <script type="text/x-mathjax-config">
@@ -21,24 +22,36 @@
 
   </head>
   <body>
-    <table id="table"></table>
-    <div id="drawing"></div>
-    <script type="text/coffeescript" src="a.coffee"></script>
-    <!-- <script type="text/javascript" src="a.js"></script> -->
-    <button onclick="cancel_op()">Cancel</button>
-    <button onclick="add_black_dot()">Add Black dot</button>
-    <button onclick="add_white_dot()">Add White dot</button>
-    <button onclick="add_targ()">Add Target</button>
-    <button onclick="add_line()">Add Line</button>
-    <button onclick="add_qswap()">Add Qswap</button>
-    <button onclick="add_gate()">Add Gate</button>
-    <input id="gate"/>
-    <button onclick="add_multigate()">Add MultiGate</button>
-    <button onclick="export_to_latex()">Export to LaTeX</button>
+    <div class="container">
+      <div class="row-fluid">
+	<div class="span4">
+	  <table id="elec-comp"></table>
+	  <button class="btn btn-success">Delete</button>
+	</div>
+	<div class="span8">
+	  <table id="table"></table>
+	  <div id="drawing"></div>
+	  <script type="text/coffeescript" src="assets/js/a.coffee"></script>
+	  <!-- <script type="text/javascript" src="a.js"></script> -->
+	  <button class="btn" onclick="cancel_op()">Cancel</button>
+	  <button class="btn" onclick="add_black_dot()">Black dot</button>
+	  <button class="btn" onclick="add_white_dot()">White dot</button>
+	  <button class="btn" onclick="add_targ()">Target</button>
+	  <button class="btn" onclick="add_line()">Line</button>
+	  <button class="btn" onclick="add_qswap()">Qswap</button>
+	  <button class="btn" onclick="add_gate()">Gate</button>
+	  <input id="gate"/>
+	  <button class="btn" onclick="add_multigate()">Add MultiGate</button>
+	  <button class="btn" onclick="export_to_latex()">Export to LaTeX</button>
 
-    <div id="mouse-position">0</div>
-
-    <pre id="latex-code"></pre>
+	  <button class="btn" onclick="add_label()">Label</button>
+	  <input type="checkbox" id="label-io"> Yes for output</input>
+	  <input type="checkbox" id="label-dirac">Yes for bra</input>
+	  <div id="mouse-position">0</div>
+	  <pre id="latex-code"></pre>
+	</div>
+      </div>
+    </div>
   </body>
 </html>
 
