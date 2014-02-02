@@ -242,10 +242,15 @@ get_cur_rel_pos = (event) ->
         y = parseInt(event.pageY) - drawer.position().left
         return [x, y]
 
+click_event = (event) ->
+        [x, y] = get_cur_rel_pos event
+        Q.push locate_mouse x, y
+
+drawer.click click_event
+
 drawer.mousemove (event) ->
         [x, y] = get_cur_rel_pos event
         $("#mouse-position").text "#{x} #{y}"
-        # clog "#{event.clientX} #{event.pageX} #{drawer.position().top} #{drawer.offset().top}"
         if dashed_box
                 dashed_box.remove()
         [Bx, By] = locate_mouse x, y
@@ -254,16 +259,12 @@ drawer.mousemove (event) ->
         y1 = Y.left(By)
         y2 = Y.right(By)
         clog "#{Bx} #{By}"
-        dashed_box = draw.rect(y2 - y1, x2 - x1).move(y1, x1).attr
-                'stroke': 'black'
-                "stroke-dasharray": [2, 2]
-                'fill': 'white'
-                'fill-opacity': 0
+        dashed_box = draw.group()
+        for [X1, Y1, X2, Y2] in [[x1, y1, x2, y1], [x1, y2, x2, y2], [x2, y1, x2, y2], [x1, y1, x1, y2]]
+                draw.line(Y1, X1, Y2, X2).addTo(dashed_box).attr
+                        'stroke': 'black'
+                        "stroke-dasharray": [2, 2]
 # clog drawer_dom
-
-drawer.click (event) ->
-        [x, y] = get_cur_rel_pos event
-        Q.push locate_mouse x, y
 
 drawer.css
         position: "absolute"
