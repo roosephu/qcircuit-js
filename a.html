@@ -6,8 +6,9 @@
     <script type="text/javascript" src="coffee-script.js"> </script>
     <script type="text/javascript" src="svg.min.js"></script>
     <script type="text/javascript" src="svg.foreignobject.js"></script>
-    <script type="text/javascript" src="jquery.tableresizer.js"></script>
     <script type="text/javascript" src="jquery.min.js"></script>
+    <script type="text/javascript" src="jquery.tableresizer.js"></script>
+    <style type="text/css">th {border-bottom: 3px solid #CCC;} </style>
     <!-- <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script> -->
 
 <script type="text/x-mathjax-config">
@@ -22,8 +23,8 @@
   <body>
     <table id="table"></table>
     <div id="drawing"></div>
-    <script type="text/coffeescript" src="a.coffee"></script>
-    <!-- <script type="text/javascript" src="a.js"></script> -->
+    <!-- <script type="text/coffeescript" src="a.coffee"></script> -->
+    <script type="text/javascript" src="a.js"></script>
     <button onclick="cancel_op()">Cancel</button>
     <button onclick="add_black_dot()">Add Black dot</button>
     <button onclick="add_white_dot()">Add White dot</button>
@@ -34,7 +35,7 @@
     <input id="gate"/>
     <button onclick="add_multigate()">Add MultiGate</button>
 
-    <div id="QLen">0</div>
+    <div id="mouse-position">0</div>
   </body>
 </html>
 

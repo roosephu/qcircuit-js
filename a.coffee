@@ -1,21 +1,21 @@
 clog = console.log
-draw = SVG('drawing').size('400', '400')
+draw = SVG('drawing').size(360, 360)
 window.ops = []
 ops = window.ops
 
 init_op = [
-        # ['line', 1, 1, 3],
-        # ['line', 2, 1, 4],
-        # ['line', 3, 1, 3],
-        # ['black-dot', 1, 1],
-        # ['black-dot', 2, 2],
-        # ['black-dot', 3, 2],
-        # ['white-dot', 3, 3],
-        # ['black-dot', 4, 2], 
-        # ['targ', 1, 2],
-        # ['targ', 3, 1],
-        # ['gate', 1, 3, 'U'],
-        # ['qswap', 4, 1],
+        ['line', 1, 1, 3, 1],
+        ['line', 1, 2, 4, 2],
+        ['line', 1, 3, 3, 3],
+        ['black-dot', 1, 1],
+        ['black-dot', 2, 2],
+        ['black-dot', 3, 2],
+        ['white-dot', 3, 3],
+        ['black-dot', 4, 2], 
+        ['targ', 1, 2],
+        ['targ', 3, 1],
+        ['gate', 1, 3, 'U'],
+        ['qswap', 4, 1],
 ]
 
 class Axis
@@ -44,6 +44,8 @@ class Axis
 
         set: (col, width) ->
                 @dx[col] = width
+        get: (col) ->
+                return @dx[col]
 
         left: (x) ->
                 if x > @xs.length
@@ -52,7 +54,7 @@ class Axis
 
         right: (x) ->
                 if x >= @xs.length
-                        x = @xs.length - 1
+                        return @last
                 return @xs[x]
                 
         center: (x) ->
@@ -69,8 +71,10 @@ sz_cfg =
         'target': 30
         'qswap': 5
 
-X = new Axis 60, 10
-Y = new Axis 60, 10
+cols = 6
+rows = 6
+X = new Axis 60, rows
+Y = new Axis 60, cols
 
 center = (x, y) ->
         clog "center #{x} #{y} #{X.center(x)} #{Y.center(y)}"
@@ -204,6 +208,7 @@ class QueueEvent
                 @cnt = 0
         push: (args) ->
                 # clog "start #{@Q} #{@Q.length}"
+                clog "push: #{args}"
                 @Q.push args
                 if @Q.length >= @cnt and @func
                         # clog "start #{@Q} #{@cnt}"
@@ -220,10 +225,17 @@ class QueueEvent
 window.Q = new QueueEvent
 Q = window.Q
 
-drawer_dom = document.getElementById "drawing"
-drawer_dom.onmousemove = (event) ->
-        x = parseInt event.clientX
-        y = parseInt event.clientY
+drawer = $("#drawing")
+
+get_cur_rel_pos = (event) ->
+        x = parseInt(event.pageX) - drawer.position().top
+        y = parseInt(event.pageY) - drawer.position().left
+        return [x, y]
+
+drawer.mousemove (event) ->
+        [x, y] = get_cur_rel_pos event
+        $("#mouse-position").text "#{x} #{y}"
+        # clog "#{event.clientX} #{event.pageX} #{drawer.position().top} #{drawer.offset().top}"
         if dashed_box
                 dashed_box.remove()
         [Bx, By] = locate_mouse x, y
@@ -234,15 +246,17 @@ drawer_dom.onmousemove = (event) ->
         clog "#{Bx} #{By}"
         dashed_box = draw.rect(y2 - y1, x2 - x1).move(y1, x1).attr
                 'stroke': 'black'
-                'stroke-dasharray': [2, 2]
+                "stroke-dasharray": [2, 2]
                 'fill': 'white'
                 'fill-opacity': 0
 # clog drawer_dom
 
-drawer_dom.onclick = (event) ->
-        x = parseInt event.clientX
-        y = parseInt event.clientY
+drawer.click (event) ->
+        [x, y] = get_cur_rel_pos event
         Q.push locate_mouse x, y
+
+drawer.css
+        position: "absolute"
 
 window.add_black_dot = () ->
         func = (arg) ->
@@ -295,11 +309,27 @@ clog "rdr #{X.locate(301)}"
 
 export_to_latex = () ->
 
+mk_table = ->
+        tab = $("table")
+        rem = 20
+        for i in [0 .. rows]
+                h = if i == 0 then rem else X.get(i)
+                s = "<tr height=#{h - 2}px>"
+                for j in [0 .. cols]
+                        elem = if i == 0 then "th" else "td"
+                        style = if j == 0 then 'style="border-right: 2px solid #CCC"' else ""
+                        w = if j == 0 then rem else Y.get(j)
+                        inner = if (i == 0 and j > 0) or (i > 0 and j == 0) then i + j else ""
+                        s += "<#{elem} width=#{w - 4}px #{style}> #{inner} </#{elem}>"
+                s += '</tr>'
+                tab.append(s)
+        tab.tableresizer
+                row_border: "2px solid #CCC"
+                col_border: "2px solid #CCC"
 
-$ ->
-    $("table").tableresizer 
-        row_border: "2px solid #CCC"
-        col_border: "2px solid #000"
-tab = $("#table")
+        drawer.offset
+                top: tab.offset().top + rem + 5
+                left: tab.offset().left + rem + 5
 
+mk_table()
 # clog 'init done'
