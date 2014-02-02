@@ -23,8 +23,8 @@
   <body>
     <table id="table"></table>
     <div id="drawing"></div>
-    <!-- <script type="text/coffeescript" src="a.coffee"></script> -->
-    <script type="text/javascript" src="a.js"></script>
+    <script type="text/coffeescript" src="a.coffee"></script>
+    <!-- <script type="text/javascript" src="a.js"></script> -->
     <button onclick="cancel_op()">Cancel</button>
     <button onclick="add_black_dot()">Add Black dot</button>
     <button onclick="add_white_dot()">Add White dot</button>
@@ -34,8 +34,11 @@
     <button onclick="add_gate()">Add Gate</button>
     <input id="gate"/>
     <button onclick="add_multigate()">Add MultiGate</button>
+    <button onclick="export_to_latex()">Export to LaTeX</button>
 
     <div id="mouse-position">0</div>
+
+    <pre id="latex-code"></pre>
   </body>
 </html>
 

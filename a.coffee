@@ -60,40 +60,37 @@ X = new Axis 60, rows
 Y = new Axis 60, cols
 
 center = (x, y) ->
-        clog "center #{x} #{y} #{X.center(x)} #{Y.center(y)}"
+        # clog "center #{x} #{y} #{X.center(x)} #{Y.center(y)}"
         return [X.center(x), Y.center(y)]
 
 class QCircuit_black_dot
-        constructor: (@x, @y) ->
+        constructor: (@x1, @y1, @x2, @y2) ->
                 @type = 'black-dot'
         draw: (svg) ->
                 rad = sz_cfg['circle'] / 2
-                [xc, yc] = center @x, @y
-                clog "black-dot #{xc} #{yc} #{@x} #{@y}"
+                [xc, yc] = center @x1, @y1
+                [x2c, y2c] = center @x2, @y2
+                svg.line(yc, xc, y2c, x2c).stroke
+                        width: 1
                 svg.circle(rad * 2).move(yc - rad, xc - rad)
         apply: (map) ->
-
-class QCircuit_black_dot
-        constructor: (@x, @y) ->
-                @type = 'black-dot'
-        draw: (svg) ->
-                rad = sz_cfg['circle'] / 2
-                [xc, yc] = center @x, @y
-                clog "black-dot #{xc} #{yc} #{@x} #{@y}"
-                svg.circle(rad * 2).move(yc - rad, xc - rad)
-        apply: (map) ->
+                map[@x1][@y1] += "\\ctrl{#{@x2 - @x1}}"
 
 class QCircuit_white_dot
-        constructor: (@x, @y) ->
+        constructor: (@x1, @y1, @x2, @y2) ->
                 @type = 'white-dot'
         draw: (svg) ->
                 rad = sz_cfg['circle'] / 2
-                [xc, yc] = center @x, @y
+                [xc, yc] = center @x1, @y1
+                [x2c, y2c] = center @x2, @y2
+                svg.line(yc, xc, y2c, x2c).stroke
+                        width: 1
                 svg.circle(rad * 2).move(yc - rad, xc - rad).attr
                         'stroke-width': 2
                         'fill': 'white'
                         'fill-opacity': 1
         apply: (map) ->
+                map[@x1][@y1] += "\\ctrlo{#{@x2 - @x1}} "
 
 class QCircuit_target
         constructor: (@x, @y) ->
@@ -109,6 +106,7 @@ class QCircuit_target
                 svg.line(yc, xc - rad, yc, xc + rad).stroke
                         width: 1
         apply: (map) ->
+                map[@x][@y] += "\\targ "
 
 class QCircuit_line
         constructor: (@x1, @y1, @x2, @y2) ->
@@ -131,6 +129,7 @@ class QCircuit_qswap
                 draw.line(yc + d, xc - d, yc - d, xc + d).stroke
                         width: 3
         apply: (map) ->
+                map[@x][@y] += "\\qswap "
 
 class QCircuit_gate
         constructor: (@x, @y, @txt) ->
@@ -146,9 +145,12 @@ class QCircuit_gate
                         'fill-opacity': 1
                 svg.image("http://frog.isima.fr/cgi-bin/bruno/tex2png--10.cgi?" + @txt, d, d).move(yc - d / 2, xc - d / 2)
         apply: (map) ->
+                map[@x][@y] += "\\gate{#{@txt}}"
 
 class QCircuit_multigate
         constructor: (@c, @x, @y, @txt) ->
+                if @x > @y
+                        [@x, @y] = [@y, @x]
                 @type = 'multigate'
         draw: (svg) ->
                 d = sz_cfg['gate'] / 2
@@ -160,18 +162,22 @@ class QCircuit_multigate
                         'fill': 'white'
                         'fill-opacity': 1
                 svg.image("http://frog.isima.fr/cgi-bin/bruno/tex2png--10.cgi?" + @txt, d, d).move(xc - 10, (lc + uc) / 2 - 10)
+        apply: (map) ->
+                map[@x][@c] += "\\multigate{#{@y - @x}}{#{@txt}}"
+                for d in [@x + 1 .. @y]
+                        map[d][@c] += "\\ghost{#{@txt}}"
 
 class QCircuit_component
         constructor: () ->
                 @components = []
         fix_cover: () ->
                 for c in @components
-                        if c.type in ['black-dot', 'white-dot', 'targ', 'gate', 'multigate']
+                        if c.type in ['targ', 'gate', 'multigate']
                                 c.draw draw
         redraw: () ->
                 draw.clear()
                 for c in @components
-                        if c.type not in ['black-dot', 'white-dot', 'targ', 'gate', 'multigate']
+                        if c.type not in [ 'targ', 'gate', 'multigate']
                                 c.draw draw
                 this.fix_cover()
         add: (comp, redraw = true) ->
@@ -182,14 +188,8 @@ class QCircuit_component
 QC = new QCircuit_component
 
 for c in [
-        new QCircuit_line(1, 1, 3, 1), 
-        new QCircuit_line(1, 2, 4, 2),
-        new QCircuit_line(1, 3, 3, 3),
-        new QCircuit_black_dot(1, 1),
-        new QCircuit_black_dot(2, 2),
-        new QCircuit_black_dot(3, 2),
-        new QCircuit_white_dot(3, 3),
-        new QCircuit_black_dot(4, 2),
+        new QCircuit_black_dot(1, 1, 2, 1),
+        new QCircuit_black_dot(2, 2, 3, 2),
         new QCircuit_target(1, 2),
         new QCircuit_target(3, 1),
         new QCircuit_gate(1, 3, 'U'),
@@ -267,15 +267,19 @@ drawer.css
 
 window.add_black_dot = () ->
         func = (arg) ->
-                [x, y] = arg[0]
-                QC.add new QCircuit_black_dot x, y
-        Q.bind func, 1
+                [x1, y1] = arg[0]
+                [x2, y2] = arg[1]
+                if y1 == y2
+                        QC.add new QCircuit_black_dot x1, y1, x2, y2
+        Q.bind func, 2
 
 window.add_white_dot = () ->
         func = (arg) ->
-                [x, y] = arg[0]
-                QC.add new QCircuit_white_dot x, y
-        Q.bind func, 1
+                [x1, y1] = arg[0]
+                [x2, y2] = arg[1]
+                if y1 == y2
+                        QC.add new QCircuit_white_dot x1, y1, x2, y2
+        Q.bind func, 2
 
 window.add_targ = () ->
         func = (arg) ->
@@ -313,18 +317,28 @@ window.add_line = () ->
 
 class QCircuitGrid
         constructor: (@rows, @cols) ->
-                @map = [[new GridNode 'null' for i in [1 .. cols]] for j in [1 .. rows]]
-        imp_ops: (ops) ->
-                for op in ops
-                        cmd = op[0]
-                        if cmd == 'black-dot'
-                                [x, y] = op[1 .. 3]
+                @map = []
+                for i in [1 .. @rows]
+                        @map[i] = []
+                        for j in [1 .. @cols]
+                                @map[i][j] = ' & '
+        imp_ops: (@components) ->
         exp_tex: () ->
+                for comp in @components
+                        comp.apply @map
+                ret = "\\Qcircuit @C=1cm @R=1cm { \n"
+                for x in [1 .. @rows]
+                        for y in [1 .. @cols]
+                                ret += @map[x][y]
+                        ret += "\\\\ \n"
+                ret += "}"
+                return ret
 
-export_to_latex = () ->
+window.export_to_latex = () ->
+        clog "rc: #{rows} #{cols}"
         grid = new QCircuitGrid rows, cols
-        grid.imp_ops ops
-        return grid.exp_tex
+        grid.imp_ops QC.components
+        $('#latex-code').text grid.exp_tex()
 
 mk_table = ->
         tab = $("#table")
