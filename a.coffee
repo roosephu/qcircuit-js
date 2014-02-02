@@ -1,22 +1,5 @@
 clog = console.log
 draw = SVG('drawing').size(360, 360)
-window.ops = []
-ops = window.ops
-
-init_op = [
-        ['line', 1, 1, 3, 1],
-        ['line', 1, 2, 4, 2],
-        ['line', 1, 3, 3, 3],
-        ['black-dot', 1, 1],
-        ['black-dot', 2, 2],
-        ['black-dot', 3, 2],
-        ['white-dot', 3, 3],
-        ['black-dot', 4, 2], 
-        ['targ', 1, 2],
-        ['targ', 3, 1],
-        ['gate', 1, 3, 'U'],
-        ['qswap', 4, 1],
-]
 
 class Axis
         constructor: (@default, cnt) ->
@@ -80,116 +63,141 @@ center = (x, y) ->
         clog "center #{x} #{y} #{X.center(x)} #{Y.center(y)}"
         return [X.center(x), Y.center(y)]
 
-class Painter
-        constructor: (@draw, @ops) ->
-                # clog 'construct'
+class QCircuit_black_dot
+        constructor: (@x, @y) ->
+                @type = 'black-dot'
+        draw: (svg) ->
+                rad = sz_cfg['circle'] / 2
+                [xc, yc] = center @x, @y
+                clog "black-dot #{xc} #{yc} #{@x} #{@y}"
+                svg.circle(rad * 2).move(yc - rad, xc - rad)
+        apply: (map) ->
 
-        black_dot: (x, y) ->
+class QCircuit_black_dot
+        constructor: (@x, @y) ->
+                @type = 'black-dot'
+        draw: (svg) ->
                 rad = sz_cfg['circle'] / 2
-                [xc, yc] = center x, y
-                clog "black-dot #{xc} #{yc} #{x} #{y}"
-                draw.circle(rad * 2).move(yc - rad, xc - rad)
-        white_dot: (x, y) ->
+                [xc, yc] = center @x, @y
+                clog "black-dot #{xc} #{yc} #{@x} #{@y}"
+                svg.circle(rad * 2).move(yc - rad, xc - rad)
+        apply: (map) ->
+
+class QCircuit_white_dot
+        constructor: (@x, @y) ->
+                @type = 'white-dot'
+        draw: (svg) ->
                 rad = sz_cfg['circle'] / 2
-                [xc, yc] = center x, y
-                draw.circle(rad * 2).move(yc - rad, xc - rad).attr
+                [xc, yc] = center @x, @y
+                svg.circle(rad * 2).move(yc - rad, xc - rad).attr
                         'stroke-width': 2
                         'fill': 'white'
                         'fill-opacity': 1
-        targ: (x, y) ->
+        apply: (map) ->
+
+class QCircuit_target
+        constructor: (@x, @y) ->
+                @type = 'target'
+        draw: (svg) ->
                 rad = sz_cfg['target'] / 2
-                [xc, yc] = center x, y
-                draw.circle(rad * 2).move(yc - rad, xc - rad).attr
+                [xc, yc] = center @x, @y
+                svg.circle(rad * 2).move(yc - rad, xc - rad).attr
                         'stroke-width': 2
                         'fill-opacity': 0
-                draw.line(yc - rad, xc, yc + rad, xc).stroke
+                svg.line(yc - rad, xc, yc + rad, xc).stroke
                         width: 1
-                draw.line(yc, xc - rad, yc, xc + rad).stroke
+                svg.line(yc, xc - rad, yc, xc + rad).stroke
                         width: 1
+        apply: (map) ->
 
-        fix_line: (x1, y1, x2, y2) ->
-                for op in ops
-                        cmd = op[0]
-                        if cmd in ['black-dot', 'white-dot', 'targ', 'gate']
-                                [x, y] = op[1 .. 2]
-                                if ((x1 <= x <= x2) or (x1 >= x >= x2)) and ((y1 <= y <= y2) or (y1 >= y >= y2))
-                                        this.add op, false
-                        else if cmd == 'multigate'
-                                this.add op, false
-                                        
-        line: (x1, y1, x2, y2) ->
-                [x1c, y1c] = center x1, y1
-                [x2c, y2c] = center x2, y2
-                draw.line(y1c, x1c, y2c, x2c).stroke
+class QCircuit_line
+        constructor: (@x1, @y1, @x2, @y2) ->
+                @type = 'line'
+        draw: (svg) ->
+                [x1c, y1c] = center @x1, @y1
+                [x2c, y2c] = center @x2, @y2
+                svg.line(y1c, x1c, y2c, x2c).stroke
                         width: 1
-                this.fix_line x1, y1, x2, y2
-        qswap: (x, y) ->
+        apply: (map) ->
+
+class QCircuit_qswap
+        constructor: (@x, @y) ->
+                @type = 'qswap'
+        draw: (svg) ->
                 d = sz_cfg['qswap']
-                [xc, yc] = center x, y
+                [xc, yc] = center @x, @y
                 draw.line(yc - d, xc - d, yc + d, xc + d).stroke
                         width: 3
                 draw.line(yc + d, xc - d, yc - d, xc + d).stroke
                         width: 3
-        gate: (x, y, txt) ->
+        apply: (map) ->
+
+class QCircuit_gate
+        constructor: (@x, @y, @txt) ->
+                @type = 'gate'
+                if @y < @x
+                        [@x, @y] = [@y, @x]
+        draw: (svg) ->
                 d = sz_cfg['gate'] / 2
-                [xc, yc] = center x, y
-                draw.rect(d * 2, d * 2).move(yc - d, xc - d).attr
+                [xc, yc] = center @x, @y
+                svg.rect(d * 2, d * 2).move(yc - d, xc - d).attr
                         'stroke': 'black'
                         'fill': 'white'
                         'fill-opacity': 1
-                draw.image("http://frog.isima.fr/cgi-bin/bruno/tex2png--10.cgi?" + txt, d, d).move(yc - d / 2, xc - d / 2)
-        multigate: (c, x, y, txt) ->
-                # clog "#{c}, #{x}, #{y}, #{txt}"
-                if y < x
-                        [x, y] = [y, x]
+                svg.image("http://frog.isima.fr/cgi-bin/bruno/tex2png--10.cgi?" + @txt, d, d).move(yc - d / 2, xc - d / 2)
+        apply: (map) ->
+
+class QCircuit_multigate
+        constructor: (@c, @x, @y, @txt) ->
+                @type = 'multigate'
+        draw: (svg) ->
                 d = sz_cfg['gate'] / 2
-                xc = Y.center(c)
-                lc = X.center(y)
-                uc = X.center(x)
-                draw.rect(d * 2, d * 2 + lc - uc).move(xc - d, uc - d).attr
+                xc = Y.center(@c)
+                lc = X.center(@y)
+                uc = X.center(@x)
+                svg.rect(d * 2, d * 2 + lc - uc).move(xc - d, uc - d).attr
                         'stroke': 'black'
                         'fill': 'white'
                         'fill-opacity': 1
-                draw.image("http://frog.isima.fr/cgi-bin/bruno/tex2png--10.cgi?" + txt, d, d).move(xc - 10, (lc + uc) / 2 - 10)
-                
-        add: (op, p) ->
-                cmd = op[0]
-                if p
-                        ops.push op
-                if cmd == 'black-dot'
-                        [x, y] = op[1 .. 2]
-                        this.black_dot x, y
-                else if cmd == 'white-dot'
-                        [x, y] = op[1 .. 2]
-                        this.white_dot x, y
-                else if cmd == 'line'
-                        [x1, y1, x2, y2] = op[1 .. 4]
-                        this.line x1, y1, x2, y2
-                else if cmd == 'targ'
-                        [x, y] = op[1 .. 2]
-                        this.targ x, y
-                else if cmd == 'gate'
-                        [x, y, txt] = op[1 .. 3]
-                        this.gate x, y, txt
-                else if cmd == 'qswap'
-                        [x, y] = op[1 .. 2]
-                        this.qswap x, y
-                else if cmd == 'multigate'
-                        [c, x, y, txt] = op[1 .. 4]
-                        this.multigate c, x, y, txt
-        
-D = new Painter draw
+                svg.image("http://frog.isima.fr/cgi-bin/bruno/tex2png--10.cgi?" + @txt, d, d).move(xc - 10, (lc + uc) / 2 - 10)
+
+class QCircuit_component
+        constructor: () ->
+                @components = []
+        fix_cover: () ->
+                for c in @components
+                        if c.type in ['black-dot', 'white-dot', 'targ', 'gate', 'multigate']
+                                c.draw draw
+        redraw: () ->
+                draw.clear()
+                for c in @components
+                        if c.type not in ['black-dot', 'white-dot', 'targ', 'gate', 'multigate']
+                                c.draw draw
+                this.fix_cover()
+        add: (comp, redraw = true) ->
+                clog "add_component" + @components
+                @components.push comp
+                this.redraw() if redraw
+
+QC = new QCircuit_component
+
+for c in [
+        new QCircuit_line(1, 1, 3, 1), 
+        new QCircuit_line(1, 2, 4, 2),
+        new QCircuit_line(1, 3, 3, 3),
+        new QCircuit_black_dot(1, 1),
+        new QCircuit_black_dot(2, 2),
+        new QCircuit_black_dot(3, 2),
+        new QCircuit_white_dot(3, 3),
+        new QCircuit_black_dot(4, 2),
+        new QCircuit_target(1, 2),
+        new QCircuit_target(3, 1),
+        new QCircuit_gate(1, 3, 'U'),
+        new QCircuit_qswap(4, 1), ]
+        QC.add c, false
+QC.redraw()
 
 dashed_box = null
-redraw = () ->
-        draw.clear()
-        # init_grids()
-        for op in ops
-                D.add op, false
-for op in init_op
-        D.add op, true
-redraw()
-
 locate_mouse = (x, y) ->
         # clog "#{x} #{y} #{X.locate(x)} #{Y.locate(Y)}"
         return [Y.locate(y), X.locate(x)]
@@ -222,8 +230,7 @@ class QueueEvent
                 $("#QLen").val("#{@Q.length} rdr")
                 # clog "new bind: #{@cnt}"
 
-window.Q = new QueueEvent
-Q = window.Q
+Q = new QueueEvent
 
 drawer = $("#drawing")
 
@@ -261,32 +268,31 @@ drawer.css
 window.add_black_dot = () ->
         func = (arg) ->
                 [x, y] = arg[0]
-                # clog "black dot: #{x} #{y}"
-                D.add ['black-dot', x, y], true
+                QC.add new QCircuit_black_dot x, y
         Q.bind func, 1
 
 window.add_white_dot = () ->
         func = (arg) ->
                 [x, y] = arg[0]
-                D.add ['white-dot', x, y], true
+                QC.add new QCircuit_white_dot x, y
         Q.bind func, 1
 
 window.add_targ = () ->
         func = (arg) ->
                 [x, y] = arg[0]
-                D.add ['targ', x, y], true
+                QC.add new QCircuit_target x, y
         Q.bind func, 1
 
 window.add_qswap = () ->
         func = (arg) ->
                 [x, y] = arg[0]
-                D.add ['qswap', x, y], true
+                QC.add new QCircuit_qswap x, y
         Q.bind func, 1
 
 window.add_gate = () ->
         func = (arg) ->
                 [x, y] = arg[0]
-                D.add ['gate', x, y, $('#gate').val()], true
+                QC.add new QCircuit_gate x, y, $('#gate').val()
         Q.bind func, 1
 
 window.add_multigate = () ->
@@ -294,7 +300,7 @@ window.add_multigate = () ->
                 [x1, y1] = arg[0]
                 [x2, y2] = arg[1]
                 if y1 == y2
-                        D.add ['multigate', y1, x1, x2, $('#gate').val()], true
+                        QC.add new QCircuit_multigate y1, x1, x2, $('#gate').val()
         Q.bind func, 2
 
 window.add_line = () ->
@@ -302,15 +308,26 @@ window.add_line = () ->
                 [x1, y1] = arg[0]
                 [x2, y2] = arg[1]
                 if y1 == y2 or x1 == x2
-                        D.add ['line', x1, y1, x2, y2], true
+                        QC.add new QCircuit_line x1, y1, x2, y2
         Q.bind func, 2
 
-clog "rdr #{X.locate(301)}"
+class QCircuitGrid
+        constructor: (@rows, @cols) ->
+                @map = [[new GridNode 'null' for i in [1 .. cols]] for j in [1 .. rows]]
+        imp_ops: (ops) ->
+                for op in ops
+                        cmd = op[0]
+                        if cmd == 'black-dot'
+                                [x, y] = op[1 .. 3]
+        exp_tex: () ->
 
 export_to_latex = () ->
+        grid = new QCircuitGrid rows, cols
+        grid.imp_ops ops
+        return grid.exp_tex
 
 mk_table = ->
-        tab = $("table")
+        tab = $("#table")
         rem = 20
         for i in [0 .. rows]
                 h = if i == 0 then rem else X.get(i)
@@ -331,5 +348,12 @@ mk_table = ->
                 top: tab.offset().top + rem + 5
                 left: tab.offset().left + rem + 5
 
+# config_table = ->
+#         tab = $("#table")
+#         tab.bind "mouseup", (event) ->
+#                 tab.
+
 mk_table()
-# clog 'init done'
+
+# config_table()
+clog 'init done'
