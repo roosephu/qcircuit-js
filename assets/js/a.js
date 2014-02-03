@@ -2,7 +2,7 @@
 (function() {
   var Axis, ECcnt, ECs, Q, QC, QcircuitGrid, Qcircuit_black_dot, Qcircuit_component, Qcircuit_gate, Qcircuit_label, Qcircuit_line, Qcircuit_multigate, Qcircuit_qswap, Qcircuit_target, Qcircuit_white_dot, QueueEvent, X, Y, center, click_event, clog, cols, dashed_box, draw, drawer, get_cur_rel_pos, insert_tab, locate_mouse, mk_table, rows, sz_cfg;
 
-  draw = window.draw = SVG('drawing').size(360, 360);
+  draw = SVG('drawing').size(360, 360);
 
   clog = console.log;
 
@@ -103,16 +103,17 @@
     return [X.center(x), Y.center(y)];
   };
 
-  insert_tab = function(dom, id, type, args) {
+  insert_tab = function(elem, id, type, args) {
     var ret, tab_id;
     clog("insert: " + type + " " + args);
     tab_id = "EC" + id;
     ECs.append("<tr id='" + tab_id + "'><td>" + id + "</td><td>" + type + "</td><td>" + args + "</td><td><button class='btn btn-primary' onclick='remove_elem(" + id + ")'>Delete</button></td></tr>");
     return ret = $("#" + tab_id).click(function(event) {
-      var color;
+      var color, dom;
+      dom = elem.dom;
       clog('drd');
       color = '';
-      if (dom.flagged === true) {
+      if (dom.flagged) {
         color = 'black';
         dom.flagged = false;
       } else {
@@ -149,7 +150,7 @@
       });
       svg.circle(rad * 2).addTo(this.dom).move(yc - rad, xc - rad);
       if (!this.tab) {
-        return this.tab = insert_tab(this.dom, this.cid, "black-dot", "" + this.x1 + " " + this.y1 + " " + this.x2 + " " + this.y2);
+        return this.tab = insert_tab(this, this.cid, "black-dot", "" + this.x1 + " " + this.y1 + " " + this.x2 + " " + this.y2);
       }
     };
 
@@ -187,7 +188,7 @@
         'fill-opacity': 1
       });
       if (!this.tab) {
-        return this.tab = insert_tab(this.dom, this.cid, "white-dot", "" + this.x1 + " " + this.y1 + " " + this.x2 + " " + this.y2);
+        return this.tab = insert_tab(this, this.cid, "white-dot", "" + this.x1 + " " + this.y1 + " " + this.x2 + " " + this.y2);
       }
     };
 
@@ -224,7 +225,7 @@
         width: 1
       });
       if (!this.tab) {
-        return this.tab = insert_tab(this.dom, this.cid, "target", "" + this.x + " " + this.y);
+        return this.tab = insert_tab(this, this.cid, "target", "" + this.x + " " + this.y);
       }
     };
 
@@ -256,7 +257,7 @@
         width: 1
       });
       if (!this.tab) {
-        return this.tab = insert_tab(this.dom, this.cid, "line", "" + this.x1 + " " + this.y1 + " " + this.x2 + " " + this.y2);
+        return this.tab = insert_tab(this, this.cid, "line", "" + this.x1 + " " + this.y1 + " " + this.x2 + " " + this.y2);
       }
     };
 
@@ -303,7 +304,7 @@
         width: 3
       });
       if (!this.tab) {
-        return this.tab = insert_tab(this.dom, this.cid, "qswap", "" + this.x + " " + this.y);
+        return this.tab = insert_tab(this, this.cid, "qswap", "" + this.x + " " + this.y);
       }
     };
 
@@ -337,7 +338,7 @@
       });
       svg.image("http://frog.isima.fr/cgi-bin/bruno/tex2png--10.cgi?" + this.txt, d, d).addTo(this.dom).move(yc - d / 2, xc - d / 2);
       if (!this.tab) {
-        return this.tab = insert_tab(this.dom, this.cid, "gate", "" + this.x + " " + this.y + " " + this.txt);
+        return this.tab = insert_tab(this, this.cid, "gate", "" + this.x + " " + this.y + " " + this.txt);
       }
     };
 
@@ -378,7 +379,7 @@
       });
       svg.image("http://frog.isima.fr/cgi-bin/bruno/tex2png--10.cgi?" + this.txt, d, d).addTo(this.dom).move(xc - 10, (lc + uc) / 2 - 10);
       if (!this.tab) {
-        return this.tab = insert_tab(this.dom, this.cid, "multigate", "" + this.c + " " + this.x + " " + this.y + " " + this.txt);
+        return this.tab = insert_tab(this, this.cid, "multigate", "" + this.c + " " + this.x + " " + this.y + " " + this.txt);
       }
     };
 
@@ -419,7 +420,7 @@
       this.dom = svg.group();
       svg.image("http://frog.isima.fr/cgi-bin/bruno/tex2png--10.cgi?" + this.tex, d * 2, d * 2).addTo(this.dom).move(yc - d, xc - d);
       if (!this.tab) {
-        return this.tab = insert_tab(this.dom, this.cid, "label", "" + this.x + " " + this.y + " " + this.io + " " + this.dirac + " " + this.txt);
+        return this.tab = insert_tab(this, this.cid, "label", "" + this.x + " " + this.y + " " + this.io + " " + this.dirac + " " + this.txt);
       }
     };
 
