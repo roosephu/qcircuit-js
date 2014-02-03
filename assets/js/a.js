@@ -2,9 +2,9 @@
 (function() {
   var Axis, ECcnt, ECs, Q, QC, QcircuitGrid, Qcircuit_black_dot, Qcircuit_component, Qcircuit_gate, Qcircuit_label, Qcircuit_line, Qcircuit_multigate, Qcircuit_qswap, Qcircuit_target, Qcircuit_white_dot, QueueEvent, X, Y, center, click_event, clog, cols, dashed_box, draw, drawer, get_cur_rel_pos, insert_tab, locate_mouse, mk_table, rows, sz_cfg;
 
-  clog = console.log;
+  draw = window.draw = SVG('drawing').size(360, 360);
 
-  draw = SVG('drawing').size(360, 360);
+  clog = console.log;
 
   ECs = $("#ECs tbody");
 
@@ -301,16 +301,12 @@
 
   Qcircuit_gate = (function() {
     function Qcircuit_gate(x, y, txt) {
-      var _ref;
       this.x = x;
       this.y = y;
       this.txt = txt;
       this.type = 'gate';
       ECcnt += 1;
       this.cid = "" + ECcnt;
-      if (this.y < this.x) {
-        _ref = [this.y, this.x], this.x = _ref[0], this.y = _ref[1];
-      }
     }
 
     Qcircuit_gate.prototype.draw = function(svg) {
@@ -366,7 +362,7 @@
       });
       svg.image("http://frog.isima.fr/cgi-bin/bruno/tex2png--10.cgi?" + this.txt, d, d).addTo(this.dom).move(xc - 10, (lc + uc) / 2 - 10);
       if (!this.tab) {
-        return this.tab = insert_tab(this.cid, "multigate", "" + c + " " + this.x + " " + this.y + " " + this.txt);
+        return this.tab = insert_tab(this.cid, "multigate", "" + this.c + " " + this.x + " " + this.y + " " + this.txt);
       }
     };
 
@@ -481,7 +477,7 @@
   dashed_box = null;
 
   locate_mouse = function(x, y) {
-    return [Y.locate(y), X.locate(x)];
+    return [X.locate(y), Y.locate(x)];
   };
 
   window.cancel_op = function() {
@@ -686,24 +682,24 @@
     };
 
     QcircuitGrid.prototype.exp_tex = function() {
-      var comp, ret, x, y, _i, _j, _k, _l, _len, _len1, _ref, _ref1, _ref2, _ref3;
+      var comp, id, ret, x, y, _i, _j, _ref, _ref1, _ref2, _ref3;
       _ref = this.components;
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        comp = _ref[_i];
+      for (id in _ref) {
+        comp = _ref[id];
         if (comp.type !== 'line') {
           comp.apply(this.map);
         }
       }
       _ref1 = this.components;
-      for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
-        comp = _ref1[_j];
+      for (id in _ref1) {
+        comp = _ref1[id];
         if (comp.type === 'line') {
           comp.apply(this.map);
         }
       }
       ret = "\\Qcircuit @C=1em @R=1em { \n";
-      for (x = _k = 1, _ref2 = this.rows; 1 <= _ref2 ? _k <= _ref2 : _k >= _ref2; x = 1 <= _ref2 ? ++_k : --_k) {
-        for (y = _l = 1, _ref3 = this.cols; 1 <= _ref3 ? _l <= _ref3 : _l >= _ref3; y = 1 <= _ref3 ? ++_l : --_l) {
+      for (x = _i = 1, _ref2 = this.rows; 1 <= _ref2 ? _i <= _ref2 : _i >= _ref2; x = 1 <= _ref2 ? ++_i : --_i) {
+        for (y = _j = 1, _ref3 = this.cols; 1 <= _ref3 ? _j <= _ref3 : _j >= _ref3; y = 1 <= _ref3 ? ++_j : --_j) {
           ret += this.map[x][y];
         }
         ret += "\\\\ \n";
