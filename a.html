@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
   <head>
     <meta charset="utf-8">
     <title>Qcircuit Demo</title>
@@ -9,46 +9,47 @@
     <script type="text/javascript" src="assets/js/jquery.min.js"></script>
     <script type="text/javascript" src="assets/js/jquery.tableresizer.js"></script>
     <style type="text/css">th {border-bottom: 3px solid #CCC;} </style>
-    <link href="assets/css/bootstrap.min.css" rel="stylesheet">
-    <!-- <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script> -->
-
-<script type="text/x-mathjax-config">
-    MathJax.Hub.Config({
-        TeX: {equationNumbers: {autoNumber: ["AMS"], useLabelIds: true}},
-        "HTML-CSS": {linebreaks: {automatic: true}},
-        SVG: {linebreaks: {automatic: true}}
-    });
-</script>
-
+    <link href="assets/css/bootstrap.css" rel="stylesheet">
+    <script type="text/javascript" src="assets/js/bootstrap.min.js"></script>
   </head>
   <body>
+    <script type="text/coffeescript" src="assets/js/a.coffee"></script>
+    <!-- <script type="text/javascript" src="assets/js/a.js"></script> -->
     <div class="container">
       <div class="row-fluid">
-	<div class="span4">
+	<div class="col-md-2">
 	  <table id="elec-comp"></table>
-	  <button class="btn btn-success">Delete</button>
-	</div>
-	<div class="span8">
-	  <table id="table"></table>
-	  <div id="drawing"></div>
-	  <script type="text/coffeescript" src="assets/js/a.coffee"></script>
-	  <!-- <script type="text/javascript" src="a.js"></script> -->
-	  <button class="btn" onclick="cancel_op()">Cancel</button>
-	  <button class="btn" onclick="add_black_dot()">Black dot</button>
-	  <button class="btn" onclick="add_white_dot()">White dot</button>
-	  <button class="btn" onclick="add_targ()">Target</button>
-	  <button class="btn" onclick="add_line()">Line</button>
-	  <button class="btn" onclick="add_qswap()">Qswap</button>
-	  <button class="btn" onclick="add_gate()">Gate</button>
-	  <input id="gate"/>
-	  <button class="btn" onclick="add_multigate()">Add MultiGate</button>
-	  <button class="btn" onclick="export_to_latex()">Export to LaTeX</button>
-
-	  <button class="btn" onclick="add_label()">Label</button>
+	  <button class="btn btn-primary">Delete</button> <br />
+	  <!-- <div class="btn-group"> -->
+	    <button class="btn btn-primary" onclick="cancel_op()">Cancel</button> <br />
+	    <button class="btn btn-primary" onclick="add_black_dot()">Black dot</button> <br />
+	    <button class="btn btn-primary" onclick="add_white_dot()">White dot</button> <br />
+	    <button class="btn btn-primary" onclick="add_targ()">Target</button> <br />
+	    <button class="btn btn-primary" onclick="add_line()">Line</button> <br />
+	    <button class="btn btn-primary" onclick="add_qswap()">Qswap</button> <br />
+	    <button class="btn btn-primary" onclick="add_gate()">Gate</button> <br />
+	    <button class="btn btn-primary" onclick="add_multigate()">Add MultiGate</button> <br />
+	    <button class="btn btn-primary" onclick="export_to_latex()">Export to LaTeX</button> <br />
+	    <button class="btn btn-primary" onclick="add_label()">Label</button> <br />
+	  <!-- </div> -->
+	  <input id="gate" class="form-control"/>
 	  <input type="checkbox" id="label-io"> Yes for output</input>
 	  <input type="checkbox" id="label-dirac">Yes for bra</input>
 	  <div id="mouse-position">0</div>
+	</div>
+	<div class="col-md-6">
+	  <table id="table"></table>
+	  <div id="drawing"></div>
 	  <pre id="latex-code"></pre>
+	</div>
+	<div class="col-md-4">
+	  <table id="ECs" class="table table-bordered table-striped table-hover">
+	    <thead>
+	      <tr><th>EC-ID</th><th>Type</th><th>Args</th><th>Delete</th></tr>
+	    </thead>
+	    <tbody>
+	    </tbody>
+	  </table>
 	</div>
       </div>
     </div>

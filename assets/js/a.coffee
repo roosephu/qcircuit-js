@@ -1,5 +1,7 @@
 clog = console.log
 draw = SVG('drawing').size(360, 360)
+ECs = $("#ECs tbody")
+ECcnt = 0
 
 class Axis
         constructor: (@default, cnt) ->
@@ -8,7 +10,6 @@ class Axis
                         @dx.push @default
                 @sum = (x, y) -> x + y
                 this.upd_xs()
-                # clog "drdrd #{@dx}"
 
         upd_xs: () ->
                 @last = 0
@@ -63,59 +64,81 @@ center = (x, y) ->
         # clog "center #{x} #{y} #{X.center(x)} #{Y.center(y)}"
         return [X.center(x), Y.center(y)]
 
+insert_tab = (id, type, args) ->
+        clog "insert: #{type} #{args}"
+        tab_id = "EC#{id}"
+        ECs.append "<tr id='#{tab_id}'><td>#{id}</td><td>#{type}</td><td>#{args}</td><td><button class='btn btn-primary' onclick='remove_elem(#{id})'>Delete</button></td></tr>"
+        return $("#" + tab_id)
+
 class Qcircuit_black_dot
         constructor: (@x1, @y1, @x2, @y2) ->
                 @type = 'black-dot'
+                ECcnt += 1
+                @cid = "#{ECcnt}"
         draw: (svg) ->
                 rad = sz_cfg['circle'] / 2
                 [xc, yc] = center @x1, @y1
                 [x2c, y2c] = center @x2, @y2
-                svg.line(yc, xc, y2c, x2c).stroke
+                @dom = svg.group()
+                svg.line(yc, xc, y2c, x2c).addTo(@dom).stroke
                         width: 1
-                svg.circle(rad * 2).move(yc - rad, xc - rad)
+                svg.circle(rad * 2).addTo(@dom).move(yc - rad, xc - rad)
+                @tab = insert_tab @cid, "black-dot", "#{@x1} #{@y1} #{@x2} #{@y2}" unless @tab
         apply: (map) ->
                 map[@x1][@y1] += "\\ctrl{#{@x2 - @x1}}"
 
 class Qcircuit_white_dot
         constructor: (@x1, @y1, @x2, @y2) ->
                 @type = 'white-dot'
+                ECcnt += 1;
+                @cid = "#{ECcnt}"
         draw: (svg) ->
                 rad = sz_cfg['circle'] / 2
                 [xc, yc] = center @x1, @y1
                 [x2c, y2c] = center @x2, @y2
-                svg.line(yc, xc, y2c, x2c).stroke
+                @dom = svg.group()
+                svg.line(yc, xc, y2c, x2c).addTo(@dom).stroke
                         width: 1
-                svg.circle(rad * 2).move(yc - rad, xc - rad).attr
+                svg.circle(rad * 2).addTo(@dom).move(yc - rad, xc - rad).attr
                         'stroke-width': 2
                         'fill': 'white'
                         'fill-opacity': 1
+                @tab = insert_tab @cid, "white-dot", "#{@x1} #{@y1} #{@x2} #{@y2}" unless @tab
         apply: (map) ->
                 map[@x1][@y1] += "\\ctrlo{#{@x2 - @x1}} "
 
 class Qcircuit_target
         constructor: (@x, @y) ->
                 @type = 'target'
+                ECcnt += 1;
+                @cid = "#{ECcnt}"
         draw: (svg) ->
                 rad = sz_cfg['target'] / 2
                 [xc, yc] = center @x, @y
-                svg.circle(rad * 2).move(yc - rad, xc - rad).attr
+                @dom = svg.group()
+                svg.circle(rad * 2).addTo(@dom).move(yc - rad, xc - rad).attr
                         'stroke-width': 2
                         'fill-opacity': 0
-                svg.line(yc - rad, xc, yc + rad, xc).stroke
+                svg.line(yc - rad, xc, yc + rad, xc).addTo(@dom).stroke
                         width: 1
-                svg.line(yc, xc - rad, yc, xc + rad).stroke
+                svg.line(yc, xc - rad, yc, xc + rad).addTo(@dom).stroke
                         width: 1
+                @tab = insert_tab @cid, "target", "#{@x} #{@y}" unless @tab
         apply: (map) ->
                 map[@x][@y] += "\\targ "
 
 class Qcircuit_line
         constructor: (@x1, @y1, @x2, @y2) ->
                 @type = 'line'
+                ECcnt += 1;
+                @cid = "#{ECcnt}"
         draw: (svg) ->
                 [x1c, y1c] = center @x1, @y1
-                [x2c, y2c] = center @x2, @y2
-                svg.line(y1c, x1c, y2c, x2c).stroke
+                [x2c, y2c] = center @x2, @y2 
+                @dom = svg.group()
+                svg.line(y1c, x1c, y2c, x2c).addTo(@dom).stroke
                         width: 1
+                @tab = insert_tab @cid, "line", "#{@x1} #{@y1} #{@x2} #{@y2}" unless @tab
         apply: (map) ->
                 [x1, x2] = if @x1 < @x2 then [@x1, @x2] else [@x2, @x1]
                 [y1, y2] = if @y1 < @y2 then [@y1, @y2] else [@y2, @y1]
@@ -125,34 +148,44 @@ class Qcircuit_line
 class Qcircuit_qswap
         constructor: (@x, @y) ->
                 @type = 'qswap'
+                ECcnt += 1;
+                @cid = "#{ECcnt}"
         draw: (svg) ->
                 d = sz_cfg['qswap']
                 [xc, yc] = center @x, @y
-                draw.line(yc - d, xc - d, yc + d, xc + d).stroke
+                @dom = svg.group()
+                svg.line(yc - d, xc - d, yc + d, xc + d).addTo(@dom).stroke
                         width: 3
-                draw.line(yc + d, xc - d, yc - d, xc + d).stroke
+                svg.line(yc + d, xc - d, yc - d, xc + d).addTo(@dom).stroke
                         width: 3
+                @tab = insert_tab @cid, "qswap", "#{@x} #{@y}" unless @tab
         apply: (map) ->
                 map[@x][@y] += "\\qswap "
 
 class Qcircuit_gate
         constructor: (@x, @y, @txt) ->
                 @type = 'gate'
+                ECcnt += 1;
+                @cid = "#{ECcnt}"
                 if @y < @x
                         [@x, @y] = [@y, @x]
         draw: (svg) ->
                 d = sz_cfg['gate'] / 2
                 [xc, yc] = center @x, @y
-                svg.rect(d * 2, d * 2).move(yc - d, xc - d).attr
+                @dom = svg.group()
+                svg.rect(d * 2, d * 2).move(yc - d, xc - d).addTo(@dom).attr
                         'stroke': 'black'
                         'fill': 'white'
                         'fill-opacity': 1
-                svg.image("http://frog.isima.fr/cgi-bin/bruno/tex2png--10.cgi?" + @txt, d, d).move(yc - d / 2, xc - d / 2)
+                svg.image("http://frog.isima.fr/cgi-bin/bruno/tex2png--10.cgi?" + @txt, d, d).addTo(@dom).move(yc - d / 2, xc - d / 2)
+                @tab = insert_tab @cid, "gate", "#{@x} #{@y} #{@txt}" unless @tab
         apply: (map) ->
                 map[@x][@y] += "\\gate{#{@txt}}"
 
 class Qcircuit_multigate
         constructor: (@c, @x, @y, @txt) ->
+                ECcnt += 1;
+                @cid = "#{ECcnt}"
                 if @x > @y
                         [@x, @y] = [@y, @x]
                 @type = 'multigate'
@@ -161,11 +194,13 @@ class Qcircuit_multigate
                 xc = Y.center(@c)
                 lc = X.center(@y)
                 uc = X.center(@x)
-                svg.rect(d * 2, d * 2 + lc - uc).move(xc - d, uc - d).attr
+                @dom = svg.group()
+                svg.rect(d * 2, d * 2 + lc - uc).move(xc - d, uc - d).addTo(@dom).attr
                         'stroke': 'black'
                         'fill': 'white'
                         'fill-opacity': 1
-                svg.image("http://frog.isima.fr/cgi-bin/bruno/tex2png--10.cgi?" + @txt, d, d).move(xc - 10, (lc + uc) / 2 - 10)
+                svg.image("http://frog.isima.fr/cgi-bin/bruno/tex2png--10.cgi?" + @txt, d, d).addTo(@dom).move(xc - 10, (lc + uc) / 2 - 10)
+                @tab = insert_tab @cid, "multigate", "#{c} #{@x} #{@y} #{@txt}" unless @tab
         apply: (map) ->
                 map[@x][@c] += "\\multigate{#{@y - @x}}{#{@txt}}"
                 for d in [@x + 1 .. @y]
@@ -173,36 +208,49 @@ class Qcircuit_multigate
 
 class Qcircuit_label
         constructor: (@x, @y, @io, @dirac, @txt) ->
+                ECcnt += 1;
+                @cid = "#{ECcnt}"
                 if @dirac == 'ket'
-                        @tex = "\\left\\vert#{@txt}\\right\\rangle"
+                        @tex = "\\left\\vert{#{@txt}}\\right\\rangle"
                 else 
-                        @tex = "\\left\\langle#{@txt}\\right\\vert"
+                        @tex = "\\left\\langle{#{@txt}}\\right\\vert"
         draw: (svg) ->
                 d = sz_cfg['gate'] / 2
                 [xc, yc] = center @x, @y
-                svg.image("http://frog.isima.fr/cgi-bin/bruno/tex2png--10.cgi?" + @tex, d * 2, d * 2).move(yc - d, xc - d)
+                @dom = svg.group()
+                svg.image("http://frog.isima.fr/cgi-bin/bruno/tex2png--10.cgi?" + @tex, d * 2, d * 2).addTo(@dom).move(yc - d, xc - d)
+                @tab = insert_tab @cid, "label", "#{@x} #{@y} #{@io} #{@dirac} #{@txt}" unless @tab
         apply: (map) ->
                 io_tex = if @io == "i" then "lstick" else "rstick"
                 map[@x][@y] += "\\#{io_tex}{\\#{@dirac}{#{@txt}}}"
 
 class Qcircuit_component
         constructor: () ->
-                @components = []
+                @components = {}
         fix_cover: () ->
-                for c in @components
+                for id, c of @components
                         if c.type in ['targ', 'gate', 'multigate']
                                 c.draw draw
         redraw: () ->
+                # clog @components
                 draw.clear()
-                for c in @components
+                # $("#ECs tbody > tr").remove()
+                for id, c of @components
                         if c.type not in [ 'targ', 'gate', 'multigate']
                                 c.draw draw
                 this.fix_cover()
         add: (comp, redraw = true) ->
-                @components.push comp
+                @components[comp.cid] = comp
                 this.redraw() if redraw
 
 QC = new Qcircuit_component
+
+window.remove_elem = (id) ->
+        obj = QC.components["#{id}"]
+        # clog obj.tab
+        obj.tab.remove()
+        delete QC.components["#{id}"]
+        QC.redraw()
 
 dashed_box = null
 locate_mouse = (x, y) ->
@@ -231,10 +279,8 @@ class QueueEvent
                         @Q = []
                         @func = null
                 clog "Queue Length #{@Q.length}"
-                $("#QLen").val("#{@Q.length} drd")
         bind: (@func, @cnt) ->
                 @Q = []
-                $("#QLen").val("#{@Q.length} rdr")
                 # clog "new bind: #{@cnt}"
 
 Q = new QueueEvent
@@ -242,16 +288,18 @@ Q = new QueueEvent
 drawer = $("#drawing")
 
 get_cur_rel_pos = (event) ->
-        # clog "#{event.pageX} - #{drawer.position().left}"
-        x = parseInt(event.pageX) - drawer.position().left
-        y = parseInt(event.pageY) - drawer.position().top
+        # clog "#{event.pageX} - #{drawer.offset().left}"
+        x = parseInt(event.pageX) - drawer.offset().left
+        y = parseInt(event.pageY) - drawer.offset().top
         return [x, y]
 
 click_event = (event) ->
         [x, y] = get_cur_rel_pos event
         Q.push locate_mouse x, y
 
-drawer.click click_event
+drawer.click (event) ->
+        clog "drdrd"
+        click_event event
 
 drawer.mousemove (event) ->
         [x, y] = get_cur_rel_pos event
@@ -378,8 +426,8 @@ mk_table = ->
                 col_border: "2px solid #CCC"
 
         drawer.offset
-                top: tab.offset().top + rem + 5
-                left: tab.offset().left + rem + 5
+                top: tab.offset().top + rem
+                left: tab.offset().left + rem
 
 # config_table = ->
 #         tab = $("#table")
