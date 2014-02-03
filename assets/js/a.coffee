@@ -64,11 +64,23 @@ center = (x, y) ->
     # clog "center #{x} #{y} #{X.center(x)} #{Y.center(y)}"
     return [X.center(x), Y.center(y)]
 
-insert_tab = (id, type, args) ->
+insert_tab = (dom, id, type, args) ->
     clog "insert: #{type} #{args}"
     tab_id = "EC#{id}"
     ECs.append "<tr id='#{tab_id}'><td>#{id}</td><td>#{type}</td><td>#{args}</td><td><button class='btn btn-primary' onclick='remove_elem(#{id})'>Delete</button></td></tr>"
-    return $("#" + tab_id)
+    ret = $("#" + tab_id).click (event) ->
+        clog 'drd'
+        color = ''
+        if dom.flagged == true
+            color = 'black'
+            dom.flagged = false
+        else
+            color = 'red'
+            dom.flagged = true
+        dom.each (_) ->
+            # clog this
+            this.stroke
+                color: color
 
 class Qcircuit_black_dot
     constructor: (@x1, @y1, @x2, @y2) ->
@@ -83,7 +95,7 @@ class Qcircuit_black_dot
         svg.line(yc, xc, y2c, x2c).addTo(@dom).stroke
             width: 1
         svg.circle(rad * 2).addTo(@dom).move(yc - rad, xc - rad)
-        @tab = insert_tab @cid, "black-dot", "#{@x1} #{@y1} #{@x2} #{@y2}" unless @tab
+        @tab = insert_tab @dom, @cid, "black-dot", "#{@x1} #{@y1} #{@x2} #{@y2}" unless @tab
     apply: (map) ->
         map[@x1][@y1] += "\\ctrl{#{@x2 - @x1}}"
 
@@ -103,7 +115,7 @@ class Qcircuit_white_dot
             'stroke-width': 2
             'fill': 'white'
             'fill-opacity': 1
-        @tab = insert_tab @cid, "white-dot", "#{@x1} #{@y1} #{@x2} #{@y2}" unless @tab
+        @tab = insert_tab @dom, @cid, "white-dot", "#{@x1} #{@y1} #{@x2} #{@y2}" unless @tab
     apply: (map) ->
         map[@x1][@y1] += "\\ctrlo{#{@x2 - @x1}} "
 
@@ -123,7 +135,7 @@ class Qcircuit_target
             width: 1
         svg.line(yc, xc - rad, yc, xc + rad).addTo(@dom).stroke
             width: 1
-        @tab = insert_tab @cid, "target", "#{@x} #{@y}" unless @tab
+        @tab = insert_tab @dom, @cid, "target", "#{@x} #{@y}" unless @tab
     apply: (map) ->
         map[@x][@y] += "\\targ "
 
@@ -138,13 +150,14 @@ class Qcircuit_line
         @dom = svg.group()
         svg.line(y1c, x1c, y2c, x2c).addTo(@dom).stroke
             width: 1
-        @tab = insert_tab @cid, "line", "#{@x1} #{@y1} #{@x2} #{@y2}" unless @tab
+        @tab = insert_tab @dom, @cid, "line", "#{@x1} #{@y1} #{@x2} #{@y2}" unless @tab
     apply: (map) ->
         [x1, x2] = if @x1 < @x2 then [@x1, @x2] else [@x2, @x1]
         [y1, y2] = if @y1 < @y2 then [@y1, @y2] else [@y2, @y1]
         for x in [x1 .. x2]
             for y in [y1 .. y2]
                 map[x][y] += "\\qw "
+
 class Qcircuit_qswap
     constructor: (@x, @y) ->
         @type = 'qswap'
@@ -158,7 +171,7 @@ class Qcircuit_qswap
             width: 3
         svg.line(yc + d, xc - d, yc - d, xc + d).addTo(@dom).stroke
             width: 3
-        @tab = insert_tab @cid, "qswap", "#{@x} #{@y}" unless @tab
+        @tab = insert_tab @dom, @cid, "qswap", "#{@x} #{@y}" unless @tab
     apply: (map) ->
         map[@x][@y] += "\\qswap "
 
@@ -176,7 +189,7 @@ class Qcircuit_gate
             'fill': 'white'
             'fill-opacity': 1
         svg.image("http://frog.isima.fr/cgi-bin/bruno/tex2png--10.cgi?" + @txt, d, d).addTo(@dom).move(yc - d / 2, xc - d / 2)
-        @tab = insert_tab @cid, "gate", "#{@x} #{@y} #{@txt}" unless @tab
+        @tab = insert_tab @dom, @cid, "gate", "#{@x} #{@y} #{@txt}" unless @tab
     apply: (map) ->
         map[@x][@y] += "\\gate{#{@txt}}"
 
@@ -198,7 +211,7 @@ class Qcircuit_multigate
             'fill': 'white'
             'fill-opacity': 1
         svg.image("http://frog.isima.fr/cgi-bin/bruno/tex2png--10.cgi?" + @txt, d, d).addTo(@dom).move(xc - 10, (lc + uc) / 2 - 10)
-        @tab = insert_tab @cid, "multigate", "#{@c} #{@x} #{@y} #{@txt}" unless @tab
+        @tab = insert_tab @dom, @cid, "multigate", "#{@c} #{@x} #{@y} #{@txt}" unless @tab
     apply: (map) ->
         map[@x][@c] += "\\multigate{#{@y - @x}}{#{@txt}}"
         for d in [@x + 1 .. @y]
@@ -217,7 +230,7 @@ class Qcircuit_label
         [xc, yc] = center @x, @y
         @dom = svg.group()
         svg.image("http://frog.isima.fr/cgi-bin/bruno/tex2png--10.cgi?" + @tex, d * 2, d * 2).addTo(@dom).move(yc - d, xc - d)
-        @tab = insert_tab @cid, "label", "#{@x} #{@y} #{@io} #{@dirac} #{@txt}" unless @tab
+        @tab = insert_tab @dom, @cid, "label", "#{@x} #{@y} #{@io} #{@dirac} #{@txt}" unless @tab
     apply: (map) ->
         io_tex = if @io == "i" then "lstick" else "rstick"
         map[@x][@y] += "\\#{io_tex}{\\#{@dirac}{#{@txt}}}"
@@ -255,13 +268,6 @@ locate_mouse = (x, y) ->
     # clog "#{x} #{y} #{X.locate(x)} #{Y.locate(Y)}"
     return [X.locate(y), Y.locate(x)]
 
-window.cancel_op = () ->
-    if QC.components.length == 0
-        clog 'empty operation!'
-    else 
-        QC.components = QC.components[0 .. -2]
-        QC.redraw()
-
 class QueueEvent
     constructor: ->
         @Q = []
@@ -295,9 +301,7 @@ click_event = (event) ->
     [x, y] = get_cur_rel_pos event
     Q.push locate_mouse x, y
 
-drawer.click (event) ->
-    clog "drdrd"
-    click_event event
+drawer.click click_event
 
 drawer.mousemove (event) ->
     [x, y] = get_cur_rel_pos event

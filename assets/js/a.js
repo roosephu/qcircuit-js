@@ -103,12 +103,28 @@
     return [X.center(x), Y.center(y)];
   };
 
-  insert_tab = function(id, type, args) {
-    var tab_id;
+  insert_tab = function(dom, id, type, args) {
+    var ret, tab_id;
     clog("insert: " + type + " " + args);
     tab_id = "EC" + id;
     ECs.append("<tr id='" + tab_id + "'><td>" + id + "</td><td>" + type + "</td><td>" + args + "</td><td><button class='btn btn-primary' onclick='remove_elem(" + id + ")'>Delete</button></td></tr>");
-    return $("#" + tab_id);
+    return ret = $("#" + tab_id).click(function(event) {
+      var color;
+      clog('drd');
+      color = '';
+      if (dom.flagged === true) {
+        color = 'black';
+        dom.flagged = false;
+      } else {
+        color = 'red';
+        dom.flagged = true;
+      }
+      return dom.each(function(_) {
+        return this.stroke({
+          color: color
+        });
+      });
+    });
   };
 
   Qcircuit_black_dot = (function() {
@@ -133,7 +149,7 @@
       });
       svg.circle(rad * 2).addTo(this.dom).move(yc - rad, xc - rad);
       if (!this.tab) {
-        return this.tab = insert_tab(this.cid, "black-dot", "" + this.x1 + " " + this.y1 + " " + this.x2 + " " + this.y2);
+        return this.tab = insert_tab(this.dom, this.cid, "black-dot", "" + this.x1 + " " + this.y1 + " " + this.x2 + " " + this.y2);
       }
     };
 
@@ -171,7 +187,7 @@
         'fill-opacity': 1
       });
       if (!this.tab) {
-        return this.tab = insert_tab(this.cid, "white-dot", "" + this.x1 + " " + this.y1 + " " + this.x2 + " " + this.y2);
+        return this.tab = insert_tab(this.dom, this.cid, "white-dot", "" + this.x1 + " " + this.y1 + " " + this.x2 + " " + this.y2);
       }
     };
 
@@ -208,7 +224,7 @@
         width: 1
       });
       if (!this.tab) {
-        return this.tab = insert_tab(this.cid, "target", "" + this.x + " " + this.y);
+        return this.tab = insert_tab(this.dom, this.cid, "target", "" + this.x + " " + this.y);
       }
     };
 
@@ -240,7 +256,7 @@
         width: 1
       });
       if (!this.tab) {
-        return this.tab = insert_tab(this.cid, "line", "" + this.x1 + " " + this.y1 + " " + this.x2 + " " + this.y2);
+        return this.tab = insert_tab(this.dom, this.cid, "line", "" + this.x1 + " " + this.y1 + " " + this.x2 + " " + this.y2);
       }
     };
 
@@ -287,7 +303,7 @@
         width: 3
       });
       if (!this.tab) {
-        return this.tab = insert_tab(this.cid, "qswap", "" + this.x + " " + this.y);
+        return this.tab = insert_tab(this.dom, this.cid, "qswap", "" + this.x + " " + this.y);
       }
     };
 
@@ -321,7 +337,7 @@
       });
       svg.image("http://frog.isima.fr/cgi-bin/bruno/tex2png--10.cgi?" + this.txt, d, d).addTo(this.dom).move(yc - d / 2, xc - d / 2);
       if (!this.tab) {
-        return this.tab = insert_tab(this.cid, "gate", "" + this.x + " " + this.y + " " + this.txt);
+        return this.tab = insert_tab(this.dom, this.cid, "gate", "" + this.x + " " + this.y + " " + this.txt);
       }
     };
 
@@ -362,7 +378,7 @@
       });
       svg.image("http://frog.isima.fr/cgi-bin/bruno/tex2png--10.cgi?" + this.txt, d, d).addTo(this.dom).move(xc - 10, (lc + uc) / 2 - 10);
       if (!this.tab) {
-        return this.tab = insert_tab(this.cid, "multigate", "" + this.c + " " + this.x + " " + this.y + " " + this.txt);
+        return this.tab = insert_tab(this.dom, this.cid, "multigate", "" + this.c + " " + this.x + " " + this.y + " " + this.txt);
       }
     };
 
@@ -403,7 +419,7 @@
       this.dom = svg.group();
       svg.image("http://frog.isima.fr/cgi-bin/bruno/tex2png--10.cgi?" + this.tex, d * 2, d * 2).addTo(this.dom).move(yc - d, xc - d);
       if (!this.tab) {
-        return this.tab = insert_tab(this.cid, "label", "" + this.x + " " + this.y + " " + this.io + " " + this.dirac + " " + this.txt);
+        return this.tab = insert_tab(this.dom, this.cid, "label", "" + this.x + " " + this.y + " " + this.io + " " + this.dirac + " " + this.txt);
       }
     };
 
@@ -480,15 +496,6 @@
     return [X.locate(y), Y.locate(x)];
   };
 
-  window.cancel_op = function() {
-    if (QC.components.length === 0) {
-      return clog('empty operation!');
-    } else {
-      QC.components = QC.components.slice(0, -1);
-      return QC.redraw();
-    }
-  };
-
   QueueEvent = (function() {
     function QueueEvent() {
       this.Q = [];
@@ -534,10 +541,7 @@
     return Q.push(locate_mouse(x, y));
   };
 
-  drawer.click(function(event) {
-    clog("drdrd");
-    return click_event(event);
-  });
+  drawer.click(click_event);
 
   drawer.mousemove(function(event) {
     var Bx, By, X1, X2, Y1, Y2, x, x1, x2, y, y1, y2, _i, _len, _ref, _ref1, _ref2, _ref3, _results;
