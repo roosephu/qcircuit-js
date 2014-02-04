@@ -1,5 +1,9 @@
-draw = SVG('drawing').size(360, 360)
-clog = console.log
+cols = 8
+rows = 6
+draw = SVG('drawing').size(cols * 60, rows * 60)
+# clog = console.log
+clog = (args...) ->
+    
 ECs = $("#ECs tbody")
 ECcnt = 0
 
@@ -54,9 +58,8 @@ sz_cfg =
     'gate': 40
     'target': 30
     'qswap': 5
+    'classical-wire': 8
 
-cols = 6
-rows = 6
 X = new Axis 60, rows
 Y = new Axis 60, cols
 
@@ -70,7 +73,6 @@ insert_tab = (elem, id, type, args) ->
     ECs.append "<tr id='#{tab_id}'><td>#{id}</td><td>#{type}</td><td>#{args}</td><td><button class='btn btn-primary' onclick='remove_elem(#{id})'>Delete</button></td></tr>"
     ret = $("#" + tab_id).click (event) ->
         dom = elem.dom
-        clog 'drd'
         color = ''
         if dom.flagged
             color = 'black'
@@ -79,7 +81,6 @@ insert_tab = (elem, id, type, args) ->
             color = 'red'
             dom.flagged = true
         dom.each (_) ->
-            # clog this
             this.stroke
                 color: color
 
@@ -220,7 +221,7 @@ class Qcircuit_multigate
 
 class Qcircuit_label
     constructor: (@x, @y, @io, @dirac, @txt) ->
-        ECcnt += 1;
+        ECcnt += 1
         @cid = "#{ECcnt}"
         if @dirac == 'ket'
             @tex = "\\left\\vert{#{@txt}}\\right\\rangle"
@@ -236,24 +237,56 @@ class Qcircuit_label
         io_tex = if @io == "i" then "lstick" else "rstick"
         map[@x][@y] += "\\#{io_tex}{\\#{@dirac}{#{@txt}}}"
 
+class Qcircuit_wire
+    constructor: (@x1, @y1, @x2, @y2) ->
+        ECcnt += 1
+        @cid = "#{ECcnt}"
+    draw: (svg) ->
+        d = sz_cfg['classical-wire'] / 2
+        @dom = svg.group()
+        [x1c, y1c] = center @x1, @y1
+        [x2c, y2c] = center @x2, @y2
+        if @x1 == @x2
+            svg.line(y1c, x1c - d, y2c, x1c - d).addTo(@dom).stroke
+                width: 2
+            svg.line(y1c, x1c + d, y2c, x1c + d).addTo(@dom).stroke
+                width: 2
+        else
+            svg.line(y1c - d, x1c, y2c - d, x2c).addTo(@dom).stroke
+                width: 2
+            svg.line(y1c + d, x1c, y2c + d, x2c).addTo(@dom).stroke
+                width: 2
+        @tab = insert_tab this, @cid, "wire", "#{@x1} #{@y1} #{@x2} #{@y2}" unless @tab
+    apply: (map) ->
+        if @x1 == @x2
+            [ly, ry] = if @y1 < @y2 then [@y1, @y2] else [@y2, @y1]
+            map[@x1][ly] += "\\cw[#{ry - ly}] "
+        else
+            [lx, rx] = if @x1 < @x2 then [@x1, @x2] else [@x2, @x1]
+            map[lx][@y1] += "\\cwx[#{rx - lx}] "
+
 class Qcircuit_component
     constructor: () ->
         @components = {}
-    fix_cover: () ->
-        for id, c of @components
-            if c.type in ['targ', 'gate', 'multigate']
-                c.draw draw
     redraw: () ->
         # clog @components
         draw.clear()
         # $("#ECs tbody > tr").remove()
         for id, c of @components
-            if c.type not in [ 'targ', 'gate', 'multigate']
+            if c.type == "wire"
                 c.draw draw
-        this.fix_cover()
+        for id, c of @components
+            if c.type not in ['targ', 'gate', 'multigate', 'black-dot', 'white-dot', 'wire']
+                c.draw draw
+        for id, c of @components
+            if c.type in ['targ', 'gate', 'multigate', 'black-dot', 'white-dot']
+                c.draw draw
     add: (comp, redraw = true) ->
         @components[comp.cid] = comp
-        this.redraw() if redraw
+        this.redraw()
+    ins_row: (x) ->
+        # for id, c of @components
+        #     c.alter x
 
 QC = new Qcircuit_component
 
@@ -372,6 +405,12 @@ window.add_line = () ->
             QC.add new Qcircuit_line x1, y1, x2, y2
     Q.bind func, 2
 
+window.insert_row = () ->
+    func = (arg) ->
+        [x, y] = arg[0]
+        Q.ins_row x
+    Q.bind func, 1
+
 window.add_label = () ->
     func = (arg) ->
         [x, y] = arg[0]
@@ -380,6 +419,14 @@ window.add_label = () ->
         dirac = if $("#label-dirac").prop("checked") then "bra" else "ket"
         QC.add new Qcircuit_label x, y, io, dirac, $('#gate').val()
     Q.bind func, 1
+
+window.add_wire = () ->
+    func = (arg) ->
+        [x1, y1] = arg[0]
+        [x2, y2] = arg[1]
+        if y1 == y2 or x1 == x2
+            QC.add new Qcircuit_wire x1, y1, x2, y2
+    Q.bind func, 2
 
 class QcircuitGrid
     constructor: (@rows, @cols) ->
@@ -415,7 +462,7 @@ mk_table = ->
     rem = 20
     for i in [0 .. rows]
         h = if i == 0 then rem else X.get(i)
-        s = "<tr height=#{h - 1}px>"
+        s = "<tr height=#{h}px>"
         for j in [0 .. cols]
             elem = if i == 0 then "th" else "td"
             style = if j == 0 then 'style="border-right: 2px solid #CCC"' else ""
