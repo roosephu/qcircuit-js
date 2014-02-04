@@ -1,8 +1,8 @@
 cols = 8
 rows = 6
 draw = SVG('drawing').size(cols * 60, rows * 60)
-# clog = console.log
-clog = (args...) ->
+clog = console.log
+# clog = (args...) ->
     
 ECs = $("#ECs tbody")
 ECcnt = 0
@@ -59,6 +59,7 @@ sz_cfg =
     'target': 30
     'qswap': 5
     'classical-wire': 8
+    'meter': 50
 
 X = new Axis 60, rows
 Y = new Axis 60, cols
@@ -221,6 +222,7 @@ class Qcircuit_multigate
 
 class Qcircuit_label
     constructor: (@x, @y, @io, @dirac, @txt) ->
+        @type = "label"
         ECcnt += 1
         @cid = "#{ECcnt}"
         if @dirac == 'ket'
@@ -239,6 +241,7 @@ class Qcircuit_label
 
 class Qcircuit_wire
     constructor: (@x1, @y1, @x2, @y2) ->
+        @type = "wire"
         ECcnt += 1
         @cid = "#{ECcnt}"
     draw: (svg) ->
@@ -265,6 +268,20 @@ class Qcircuit_wire
             [lx, rx] = if @x1 < @x2 then [@x1, @x2] else [@x2, @x1]
             map[lx][@y1] += "\\cwx[#{rx - lx}] "
 
+class Qcircuit_meter
+    constructor: (@x, @y) ->
+        @type = "meter"
+        ECcnt += 1
+        @cid = "#{ECcnt}"
+    draw: (svg) ->
+        d = sz_cfg['meter']
+        @dom = svg.group()
+        [xc, yc] = center @x, @y
+        svg.image("assets/img/meter.png", 40, 32).addTo(@dom).move(yc - 20, xc - 16)
+        @tab = insert_tab this, @cid, "meter", "#{@x} #{@y}" unless @tab
+    apply: (map) ->
+        map[@x][@y] += '\\meter '
+    
 class Qcircuit_component
     constructor: () ->
         @components = {}
@@ -276,10 +293,10 @@ class Qcircuit_component
             if c.type == "wire"
                 c.draw draw
         for id, c of @components
-            if c.type not in ['targ', 'gate', 'multigate', 'black-dot', 'white-dot', 'wire']
+            if c.type not in ['targ', 'gate', 'multigate', 'black-dot', 'white-dot', 'wire', 'meter']
                 c.draw draw
         for id, c of @components
-            if c.type in ['targ', 'gate', 'multigate', 'black-dot', 'white-dot']
+            if c.type in ['targ', 'gate', 'multigate', 'black-dot', 'white-dot', 'meter']
                 c.draw draw
     add: (comp, redraw = true) ->
         @components[comp.cid] = comp
@@ -387,6 +404,12 @@ window.add_gate = () ->
     func = (arg) ->
         [x, y] = arg[0]
         QC.add new Qcircuit_gate x, y, $('#gate').val()
+    Q.bind func, 1
+
+window.add_meter = () ->
+    func = (arg) ->
+        [x, y] = arg[0]
+        QC.add new Qcircuit_meter x, y
     Q.bind func, 1
 
 window.add_multigate = () ->

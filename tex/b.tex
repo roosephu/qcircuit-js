@@ -1,0 +1,44 @@
+\documentclass{article}
+\usepackage{tikz,amsmath,siunitx}
+\usetikzlibrary{arrows,snakes,backgrounds,patterns,matrix,shapes,fit,calc,shadows,plotmarks}
+\usepackage[graphics,tightpage,active]{preview}
+\PreviewEnvironment{xy}
+\PreviewEnvironment{equation}
+\PreviewEnvironment{equation*}
+\newlength{\imagewidth}
+\newlength{\imagescale}
+\pagestyle{empty}
+\thispagestyle{empty}
+\usepackage{xy}
+\xyoption{matrix}
+\xyoption{frame}
+\xyoption{arrow}
+\xyoption{arc}
+
+\newcommand{\bra}[1]{{\left\langle{#1}\right\vert}}
+\newcommand{\ket}[1]{{\left\vert{#1}\right\rangle}}
+    % Defines Dirac notation. %7/5/07 added extra braces so that the commands will work in subscripts.
+\newcommand{\qw}[1][-1]{\ar @{-} [0,#1]}
+    % Defines a wire that connects horizontally.  By default it connects to the object on the left of the current object.
+    % WARNING: Wire commands must appear after the gate in any given entry.
+\newcommand{\qwx}[1][-1]{\ar @{-} [#1,0]}
+    % Defines a wire that connects vertically.  By default it connects to the object above the current object.
+    % WARNING: Wire commands must appear after the gate in any given entry.
+\newcommand{\cw}[1][-1]{\ar @{=} [0,#1]}
+    % Defines a classical wire that connects horizontally.  By default it connects to the object on the left of the current object.
+    % WARNING: Wire commands must appear after the gate in any given entry.
+\newcommand{\cwx}[1][-1]{\ar @{=} [#1,0]}
+    % Defines a classical wire that connects vertically.  By default it connects to the object above the current object.
+    % WARNING: Wire commands must appear after the gate in any given entry.
+\newcommand{\gate}[1]{*+<.6em>{#1} \POS ="i","i"+UR;"i"+UL **\dir{-};"i"+DL **\dir{-};"i"+DR **\dir{-};"i"+UR **\dir{-},"i" \qw}
+    % Boxes the argument, making a gate.
+\newcommand{\meter}{*=<1.8em,1.4em>{\xy ="j","j"-<.778em,.322em>;{"j"+<.778em,-.322em> \ellipse ur,_{}},"j"-<0em,.4em>;p+<.5em,.9em> **\dir{-},"j"+<2.2em,2.2em>*{},"j"-<2.2em,2.2em>*{} \endxy} \POS ="i","i"+UR;"i"+UL **\dir{-};"i"+DL **\dir{-};"i"+DR **\dir{-};"i"+UR **\dir{-},"i"}
+\newcommand{\Qcircuit}{\xymatrix @*=<0em>}
+    % Defines \Qcircuit as an \xymatrix with entries of default size 0em.
+
+\begin{document}
+\[\meter\]
+\end{document}
+
+
+

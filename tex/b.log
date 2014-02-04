@@ -1,9 +1,9 @@
-This is pdfTeX, Version 3.1415926-2.5-1.40.14 (TeX Live 2013/Arch Linux) (format=pdflatex 2013.10.10)  5 FEB 2014 02:14
+This is pdfTeX, Version 3.1415926-2.5-1.40.14 (TeX Live 2013/Arch Linux) (format=pdflatex 2013.10.10)  5 FEB 2014 02:12
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
-**a.tex
-(./a.tex
+**b.tex
+(./b.tex
 LaTeX2e <2011/06/27>
 Babel <3.9f> and hyphenation patterns for 78 languages loaded.
 (/usr/share/texmf-dist/tex/latex/base/article.cls
@@ -978,32 +978,22 @@ Xy-pic pdf driver: `curve' extension support
  Xy-pic option: Arrow and Path feature v.3.9 path, \ar, loaded)
 (/usr/share/texmf-dist/tex/generic/xypic/xyarc.tex
  Xy-pic option: Circle, Ellipse, Arc feature v.3.8 circles, ellipses,
-elliptical arcs, loaded) (./Qcircuit.tex
-(/usr/share/texmf-dist/tex/generic/xypic/xymatrix.tex
- Xy-pic option: Matrix feature v.3.14 not reloaded)
-(/usr/share/texmf-dist/tex/generic/xypic/xyframe.tex
- Xy-pic option: Frame and Bracket extension v.3.14 not reloaded)
-Xy-pic pdf driver: `frame' extension support not reloaded
-(/usr/share/texmf-dist/tex/generic/xypic/xyarrow.tex
- Xy-pic option: Arrow and Path feature v.3.9 not reloaded)
-(/usr/share/texmf-dist/tex/generic/xypic/xyarc.tex
- Xy-pic option: Circle, Ellipse, Arc feature v.3.8 not reloaded)) (./a.aux)
-\openout1 = `a.aux'.
+elliptical arcs, loaded) (./b.aux)
+\openout1 = `b.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 26.
-LaTeX Font Info:    ... okay on input line 26.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 26.
-LaTeX Font Info:    ... okay on input line 26.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 26.
-LaTeX Font Info:    ... okay on input line 26.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 26.
-LaTeX Font Info:    ... okay on input line 26.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 26.
-LaTeX Font Info:    ... okay on input line 26.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 26.
-LaTeX Font Info:    ... okay on input line 26.
-
-ABD: EveryShipout initializing macros
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 39.
+LaTeX Font Info:    ... okay on input line 39.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 39.
+LaTeX Font Info:    ... okay on input line 39.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 39.
+LaTeX Font Info:    ... okay on input line 39.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 39.
+LaTeX Font Info:    ... okay on input line 39.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 39.
+LaTeX Font Info:    ... okay on input line 39.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 39.
+LaTeX Font Info:    ... okay on input line 39.
+ ABD: EveryShipout initializing macros
 (/usr/share/texmf-dist/tex/context/base/supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
 \scratchcounter=\count178
@@ -1070,25 +1060,27 @@ File: siunitx-abbreviations.cfg 2013/07/31 v2.5s siunitx: Abbreviated units
 )
 Preview: Fontsize 10pt
 Preview: PDFoutput 1
-Package xypdf Info: Line width: 0.39998pt on input line 26.
+Package xypdf Info: Line width: 0.39998pt on input line 39.
 \c__siunitx_mathsf_int=\count184
 \c__siunitx_mathtt_int=\count185
-<xymatrix 2x1 105>
-Preview: Tightpage -32891 -32891 32891 32891
-[1] (./a.aux) ) 
+! Xy-pic error: command used out of context: ="i".
+\xyerror@ ...#2}\fi \errmessage {Xy-pic error: #1}
+                                                  }
+l.40 \[\meter
+             \]
+? x
+ 
 Here is how much of TeX's memory you used:
- 23738 strings out of 493311
- 489397 string characters out of 6143649
- 577278 words of memory out of 5000000
- 26733 multiletter control sequences out of 15000+600000
+ 23693 strings out of 493311
+ 488783 string characters out of 6143649
+ 576116 words of memory out of 5000000
+ 26701 multiletter control sequences out of 15000+600000
  6364 words of font info for 27 fonts, out of 8000000 for 9000
  957 hyphenation exceptions out of 8191
- 56i,20n,73p,1395b,712s stack positions out of 5000i,500n,10000p,200000b,80000s
-
-Output written on a.pdf (1 page, 1191 bytes).
+ 56i,11n,73p,1395b,552s stack positions out of 5000i,500n,10000p,200000b,80000s
+No pages of output.
 PDF statistics:
- 27 PDF objects out of 1000 (max. 8388607)
- 7 compressed objects within 1 object stream
+ 19 PDF objects out of 1000 (max. 8388607)
  0 named destinations out of 1000 (max. 500000)
- 109 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 97 words of extra memory for PDF output out of 10000 (max. 10000000)
 
