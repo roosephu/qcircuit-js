@@ -1,8 +1,8 @@
 cols = 8
 rows = 6
 draw = SVG('drawing').size(cols * 60, rows * 60)
-clog = console.log
-# clog = (args...) ->
+# clog = console.log
+clog = (args...) ->
         
 ECs = $("#ECs tbody")
 ECcnt = 0
@@ -351,15 +351,83 @@ class Qcircuit_measureD
                         "stroke-width": 2
                         "fill": "white"
                         "fill-opacity": 0
-                        "d": "M #{yc - 12} #{xc - 12}
+                        "d": "M #{yc - 20} #{xc - 12}
                               L #{yc + 12} #{xc - 12}
                               A #{12} #{12} 90 0 1 #{yc + 12} #{xc + 12}
-                              L #{yc - 12} #{xc + 12}
+                              L #{yc - 20} #{xc + 12}
                               Z"
                 svg.image("http://frog.isima.fr/cgi-bin/bruno/tex2png--10.cgi?" + @txt, d * 2 - 5, d * 2 - 5).addTo(@dom).move(yc - d + 5, xc - d + 5)
                 @tab = insert_tab this, @cid, "measureD", "#{@x} #{@y} #{@txt}" unless @tab
         apply: (map) ->
                 map[@x][@y] += "\\measureD{@txt} "
+
+class Qcircuit_multimeasure
+        constructor: (@c, @x, @y, @txt) ->
+                ECcnt += 1;
+                @cid = "#{ECcnt}"
+                if @x > @y
+                        [@x, @y] = [@y, @x]
+                @type = 'multimeasure'
+        draw: (svg) ->
+                d = sz_cfg['gate'] / 2
+                r = 12
+                xc = Y.center(@c)
+                lc = X.center(@y)
+                uc = X.center(@x)
+                @dom = svg.group()
+                svg.path("").addTo(@dom).attr
+                        "stroke": "black"
+                        "stroke-width": 2
+                        "fill": "white"
+                        "fill-opacity": 0
+                        "d": "M #{xc - r} #{uc - r} 
+                              A #{r} #{r} 90 0 0 #{xc - r * 2} #{uc}
+                              L #{xc - r * 2} #{lc}
+                              A #{r} #{r} 90 0 0 #{xc - r} #{lc + r}
+                              L #{xc + r} #{lc + r}
+                              A #{r} #{r} 90 0 0 #{xc + r * 2} #{lc}
+                              L #{xc + r * 2} #{uc}
+                              A #{r} #{r} 90 0 0 #{xc + r} #{uc - r}
+                              Z"
+                svg.image("http://frog.isima.fr/cgi-bin/bruno/tex2png--10.cgi?" + @txt, d, d).addTo(@dom).move(xc - 10, (lc + uc) / 2 - 10)
+                @tab = insert_tab this, @cid, "multimeasure", "#{@c} #{@x} #{@y} #{@txt}" unless @tab
+        apply: (map) ->
+                map[@x][@c] += "\\multimeasure{#{@y - @x}}{#{@txt}}"
+                for d in [@x + 1 .. @y]
+                        map[d][@c] += "\\ghost{#{@txt}}"
+
+class Qcircuit_multimeasureD
+        constructor: (@c, @x, @y, @txt) ->
+                ECcnt += 1;
+                @cid = "#{ECcnt}"
+                if @x > @y
+                        [@x, @y] = [@y, @x]
+                @type = 'multimeasureD'
+        draw: (svg) ->
+                d = sz_cfg['gate'] / 2
+                r = 12
+                xc = Y.center(@c)
+                lc = X.center(@y)
+                uc = X.center(@x)
+                @dom = svg.group()
+                svg.path("").addTo(@dom).attr
+                        "stroke": "black"
+                        "stroke-width": 2
+                        "fill": "white"
+                        "fill-opacity": 0
+                        "d": "M #{xc - d} #{uc - r} 
+                              L #{xc - d} #{lc + r}
+                              L #{xc + r} #{lc + r}
+                              A #{r} #{r} 90 0 0 #{xc + r * 2} #{lc}
+                              L #{xc + r * 2} #{uc}
+                              A #{r} #{r} 90 0 0 #{xc + r} #{uc - r}
+                              Z"
+                svg.image("http://frog.isima.fr/cgi-bin/bruno/tex2png--10.cgi?" + @txt, d, d).addTo(@dom).move(xc - 10, (lc + uc) / 2 - 10)
+                @tab = insert_tab this, @cid, "multimeasureD", "#{@c} #{@x} #{@y} #{@txt}" unless @tab
+        apply: (map) ->
+                map[@x][@c] += "\\multimeasureD{#{@y - @x}}{#{@txt}}"
+                for d in [@x + 1 .. @y]
+                        map[d][@c] += "\\ghost{#{@txt}}"
 
 class Qcircuit_component
         constructor: () ->
@@ -515,6 +583,22 @@ window.add_multigate = () ->
                 [x2, y2] = arg[1]
                 if y1 == y2
                         QC.add new Qcircuit_multigate y1, x1, x2, $('#gate').val()
+        Q.bind func, 2
+
+window.add_multimeasure = () ->
+        func = (arg) ->
+                [x1, y1] = arg[0]
+                [x2, y2] = arg[1]
+                if y1 == y2
+                        QC.add new Qcircuit_multimeasure y1, x1, x2, $('#gate').val()
+        Q.bind func, 2
+
+window.add_multimeasureD = () ->
+        func = (arg) ->
+                [x1, y1] = arg[0]
+                [x2, y2] = arg[1]
+                if y1 == y2
+                        QC.add new Qcircuit_multimeasureD y1, x1, x2, $('#gate').val()
         Q.bind func, 2
 
 window.add_line = () ->
