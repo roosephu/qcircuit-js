@@ -299,11 +299,67 @@ class Qcircuit_measure
         constructor: (@x, @y, @txt) ->
                 @type = "measure"
                 ECcnt += 1
-                @cid = "#{@ECcnt}"
+                @cid = "#{ECcnt}"
         draw: (svg) ->
-                
+                d = 12
+                @dom = svg.group()
+                [xc, yc] = center @x, @y
+                svg.path("").addTo(@dom).attr
+                        "stroke": "black"
+                        "stroke-width": 2
+                        "fill": "white"
+                        "fill-opacity": 0
+                        "d": "M #{yc - d} #{xc - d} 
+                              A #{d} #{d} 90 0 0 #{yc - d} #{xc + d}
+                              L #{yc + 12} #{xc + d}
+                              A #{d} #{d} 90 0 0 #{yc + d} #{xc - d}
+                              Z"
+                svg.image("http://frog.isima.fr/cgi-bin/bruno/tex2png--10.cgi?" + @txt, d * 2, d * 2).addTo(@dom).move(yc - d, xc - d)
+                @tab = insert_tab this, @cid, "measure", "#{@x} #{@y} #{@txt}" unless @tab
         apply: (map) ->
-                map[@x][@y] += "\\measure "
+                map[@x][@y] += "\\measure{@txt}"
+
+class Qcircuit_measuretab
+        constructor: (@x, @y, @txt) ->
+                @type = "measuretab"
+                ECcnt += 1
+                @cid = "#{ECcnt}"
+        draw: (svg) ->
+                d = 12
+                @dom = svg.group()
+                [xc, yc] = center @x, @y
+                svg.polygon("#{yc - 25},#{xc} #{yc - 15},#{xc - 20} #{yc + 20},#{xc - 20} #{yc + 20},#{xc+20} #{yc - 15},#{xc + 20}").addTo(@dom).attr
+                        "stroke": "black"
+                        "stroke-width": 2
+                        "fill": "white"
+                svg.image("http://frog.isima.fr/cgi-bin/bruno/tex2png--10.cgi?" + @txt, d * 2, d * 2).addTo(@dom).move(yc - d, xc - d)
+                @tab = insert_tab this, @cid, "measuretab", "#{@x} #{@y} #{@txt}" unless @tab
+        apply: (map) ->
+                map[@x][@y] += "\\measuretab{@txt} "
+
+class Qcircuit_measureD
+        constructor: (@x, @y, @txt) ->
+                @type = "measureD"
+                ECcnt += 1
+                @cid = "#{ECcnt}"
+        draw: (svg) ->
+                d = 12
+                @dom = svg.group()
+                [xc, yc] = center @x, @y
+                svg.path("").addTo(@dom).attr
+                        "stroke": "black"
+                        "stroke-width": 2
+                        "fill": "white"
+                        "fill-opacity": 0
+                        "d": "M #{yc - 12} #{xc - 12}
+                              L #{yc + 12} #{xc - 12}
+                              A #{12} #{12} 90 0 1 #{yc + 12} #{xc + 12}
+                              L #{yc - 12} #{xc + 12}
+                              Z"
+                svg.image("http://frog.isima.fr/cgi-bin/bruno/tex2png--10.cgi?" + @txt, d * 2 - 5, d * 2 - 5).addTo(@dom).move(yc - d + 5, xc - d + 5)
+                @tab = insert_tab this, @cid, "measureD", "#{@x} #{@y} #{@txt}" unless @tab
+        apply: (map) ->
+                map[@x][@y] += "\\measureD{@txt} "
 
 class Qcircuit_component
         constructor: () ->
@@ -433,6 +489,24 @@ window.add_meter = () ->
         func = (arg) ->
                 [x, y] = arg[0]
                 QC.add new Qcircuit_meter x, y
+        Q.bind func, 1
+
+window.add_measure = () ->
+        func = (arg) ->
+                [x, y] = arg[0]
+                QC.add new Qcircuit_measure x, y, $('#gate').val()
+        Q.bind func, 1
+
+window.add_measuretab = () ->
+        func = (arg) ->
+                [x, y] = arg[0]
+                QC.add new Qcircuit_measuretab x, y, $('#gate').val()
+        Q.bind func, 1
+
+window.add_measureD = () ->
+        func = (arg) ->
+                [x, y] = arg[0]
+                QC.add new Qcircuit_measureD x, y, $('#gate').val()
         Q.bind func, 1
 
 window.add_multigate = () ->
