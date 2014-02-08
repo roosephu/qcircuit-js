@@ -17,24 +17,9 @@
       <div class="row-fluid">
 	<div class="col-md-2">
 	  <table id="elec-comp"></table>
-	  <!-- <div class="btn-group"> -->
-	    <button class="btn btn-primary" onclick="add_black_dot()">Black dot</button> <br />
-	    <button class="btn btn-primary" onclick="add_white_dot()">White dot</button> <br />
-	    <button class="btn btn-primary" onclick="add_targ()">Target</button> <br />
-	    <button class="btn btn-primary" onclick="add_line()">Line</button> <br />
-	    <button class="btn btn-primary" onclick="add_wire()">Wire</button> <br />
-	    <button class="btn btn-primary" onclick="add_qswap()">Qswap</button> <br />
-	    <button class="btn btn-primary" onclick="add_gate()">Gate</button> <br />
-	    <button class="btn btn-primary" onclick="add_meter()">Meter</button> <br />
-	    <button class="btn btn-primary" onclick="add_measure()">Measure</button> <br />
-	    <button class="btn btn-primary" onclick="add_measuretab()">Measuretab</button> <br />
-	    <button class="btn btn-primary" onclick="add_measureD()">MeasureD</button> <br />
-	    <button class="btn btn-primary" onclick="add_multimeasure()">MultiMeasure</button> <br />
-	    <button class="btn btn-primary" onclick="add_multimeasureD()">MultiMeasureD</button> <br />
-	    <button class="btn btn-primary" onclick="add_multigate()">MultiGate</button> <br />
-	    <button class="btn btn-primary" onclick="export_to_latex()">LaTeX</button> <br />
-	    <button class="btn btn-primary" onclick="add_label()">Label</button> <br />
-	  <!-- </div> -->
+	  <div class="btn-group" id="btn-group-EC"></div>
+	  <div class="btn-group" id="btn-group-RC"></div>
+	  <button class="btn btn-primary" onclick="export_to_latex()">LaTeX</button> <br />
 	  <input id="gate" class="form-control"/>
 	  <input type="checkbox" id="label-io"> Yes for output</input>
 	  <input type="checkbox" id="label-dirac">Yes for bra</input>
@@ -48,7 +33,7 @@
 	<div class="col-md-4">
 	  <table id="ECs" class="table table-bordered table-striped table-hover">
 	    <thead>
-	      <tr><th>EC-ID</th><th>Type</th><th>Args</th><th>Delete</th></tr>
+	      <tr><th>ID</th><th>Type</th><th>Args</th><th>Delete</th></tr>
 	    </thead>
 	    <tbody>
 	    </tbody>

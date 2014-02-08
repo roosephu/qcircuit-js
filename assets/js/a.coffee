@@ -1,8 +1,8 @@
 cols = 8
 rows = 6
 draw = SVG('drawing').size(cols * 60, rows * 60)
-# clog = console.log
-clog = (args...) ->
+clog = console.log
+# clog = (args...) ->
         
 ECs = $("#ECs tbody")
 ECcnt = 0
@@ -26,7 +26,7 @@ class Axis
                         @last += i
                         @xs.push @last
                         cnt += 1
-                clog "xs: #{@xs}"
+                # clog "xs: #{@xs}"
                         
         set_default: (@default) ->
 
@@ -71,7 +71,12 @@ center = (x, y) ->
 insert_tab = (elem, id, type, args) ->
         clog "insert: #{type} #{args}"
         tab_id = "EC#{id}"
-        ECs.append "<tr id='#{tab_id}'><td>#{id}</td><td>#{type}</td><td>#{args}</td><td><button class='btn btn-primary' onclick='remove_elem(#{id})'>Delete</button></td></tr>"
+        ECs.append "<tr id='#{tab_id}'>
+                      <td>#{id}</td>
+                      <td>#{type}</td>
+                      <td>#{args}</td>
+                      <td><button class='btn btn-primary' onclick='remove_elem(#{id})'>Delete</button></td>
+                    </tr>"
         ret = $("#" + tab_id).click (event) ->
                 dom = elem.dom
                 color = ''
@@ -85,42 +90,91 @@ insert_tab = (elem, id, type, args) ->
                         @stroke
                                 color: color
 
+class ReFmt_row_add
+        constructor: (@pos) ->
+                console.log "drd"
+        point: (x, y) -> if x >= @pos then [x + 1, y] else [x, y]
+        line: (x1, y1, x2, y2) -> @point(x1, y1).concat @point(x2, y2)
+
+class ReFmt_col_add
+        constructor: (@pos) ->
+        point: (x, y) -> if y >= @pos then [x, y + 1] else [x, y]
+        line: (x1, y1, x2, y2) -> @point(x1, y1).concat @point(x2, y2)
+
+class ReFmt_row_del
+        constructor: (@pos) ->
+        point: (x, y, d = true) -> if x == @pos and d then false else if x >= @pos then [x - 1, y] else [x, y]
+        line: (x1, y1, x2, y2) ->
+                return false if x1 == x2 and x1 == @pos
+                [x1, y1] = @point(x1, y1, false)
+                [x2, y2] = @point(x2, y2, false)
+                return false if [x1, y1] == [x2, y2]
+                [x1, y1, x2, y2]
+
+class ReFmt_col_del
+        constructor: (@pos) ->
+        point: (x, y, d = true) -> if y == @pos and d then false else if y >= @pos then [x, y - 1] else [x, y]
+        line: (x1, y1, x2, y2, gate) ->
+                return false if y1 == y2 and y1 == @pos
+                [x1, y1] = @point(x1, y1, false)
+                [x2, y2] = @point(x2, y2, false)
+                return false if [x1, y1] == [x2, y2] and not gate
+                [x1, y1, x2, y2]
+
+ReFmt = (mode, pos) ->
+        switch mode
+                when "ra" then new ReFmt_row_add pos
+                when "rd" then new ReFmt_row_del pos
+                when "ca" then new ReFmt_col_add pos
+                when "cd" then new ReFmt_col_del pos
+
 class Qcircuit_black_dot
-        constructor: (@x1, @y1, @x2, @y2) ->
+        constructor: (@c, @x, @y) ->
                 @type = 'black-dot'
                 ECcnt += 1
                 @cid = "#{ECcnt}"
+        # constructor: @constructor_point 'black-dot'
         draw: (svg) ->
                 rad = sz_cfg['circle'] / 2
-                [xc, yc] = center @x1, @y1
-                [x2c, y2c] = center @x2, @y2
+                [xc, cc] = center @x, @c
+                [yc, cc] = center @y, @c
                 @dom = svg.group()
-                svg.line(yc, xc, y2c, x2c).addTo(@dom).stroke
+                
+                svg.line(cc, xc, cc, yc).addTo(@dom).stroke
                         width: 1
-                svg.circle(rad * 2).addTo(@dom).move(yc - rad, xc - rad)
-                @tab = insert_tab this, @cid, "black-dot", "#{@x1} #{@y1} #{@x2} #{@y2}" unless @tab
+                svg.circle(rad * 2).addTo(@dom).move(cc - rad, xc - rad)
+                @tab = insert_tab this, @cid, "black-dot", "#{@c} #{@x} #{@y}" unless @tab
         apply: (map) ->
-                map[@x1][@y1] += "\\ctrl{#{@x2 - @x1}}"
+                map[@x][@c] += "\\ctrl{#{@y - @x}}"
+        refmt: (mode) ->
+                ret = mode.point @x, @c
+                return false unless ret
+                [@x, @c, @y, d] = mode.line @x, @c, @y, @c
+                # clog "#{@c} #{@x} #{@y}"
 
 class Qcircuit_white_dot
-        constructor: (@x1, @y1, @x2, @y2) ->
+        constructor: (@c, @x, @y) ->
                 @type = 'white-dot'
                 ECcnt += 1;
                 @cid = "#{ECcnt}"
         draw: (svg) ->
                 rad = sz_cfg['circle'] / 2
-                [xc, yc] = center @x1, @y1
-                [x2c, y2c] = center @x2, @y2
+                [xc, cc] = center @x, @c
+                [yc, cc] = center @y, @c
                 @dom = svg.group()
-                svg.line(yc, xc, y2c, x2c).addTo(@dom).stroke
+                svg.line(cc, xc, cc, yc).addTo(@dom).stroke
                         width: 1
-                svg.circle(rad * 2).addTo(@dom).move(yc - rad, xc - rad).attr
+                svg.circle(rad * 2).addTo(@dom).move(cc - rad, xc - rad).attr
                         'stroke-width': 2
                         'fill': 'white'
                         'fill-opacity': 1
-                @tab = insert_tab this, @cid, "white-dot", "#{@x1} #{@y1} #{@x2} #{@y2}" unless @tab
+                @tab = insert_tab this, @cid, "white-dot", "#{@c} #{@x} #{@y}" unless @tab
         apply: (map) ->
-                map[@x1][@y1] += "\\ctrlo{#{@x2 - @x1}} "
+                map[@x][@c] += "\\ctrlo{#{@y - @x}} "
+        refmt: (mode) ->
+                ret = mode.point @x, @c
+                return false unless ret
+                [@x, @c, @y, d] = mode.line @x, @c, @y, @c
 
 class Qcircuit_target
         constructor: (@x, @y) ->
@@ -141,6 +195,10 @@ class Qcircuit_target
                 @tab = insert_tab this, @cid, "target", "#{@x} #{@y}" unless @tab
         apply: (map) ->
                 map[@x][@y] += "\\targ "
+        refmt: (mode) ->
+                ret = mode.point @x, @y
+                return false unless ret
+                [@x, @y] = ret
 
 class Qcircuit_line
         constructor: (@x1, @y1, @x2, @y2) ->
@@ -160,6 +218,10 @@ class Qcircuit_line
                 for x in [x1 .. x2]
                         for y in [y1 .. y2]
                                 map[x][y] += "\\qw "
+        refmt: (mode) ->
+                ret = mode.line @x1, @y1, @x2, @y2
+                return false unless ret
+                [@x1, @y1, @x2, @y2] = ret
 
 class Qcircuit_qswap
         constructor: (@x, @y) ->
@@ -177,6 +239,10 @@ class Qcircuit_qswap
                 @tab = insert_tab this, @cid, "qswap", "#{@x} #{@y}" unless @tab
         apply: (map) ->
                 map[@x][@y] += "\\qswap "
+        refmt: (mode) ->
+                ret = mode.point @x, @y
+                return false unless ret
+                [@x, @y] = ret
 
 class Qcircuit_gate
         constructor: (@x, @y, @txt) ->
@@ -191,10 +257,14 @@ class Qcircuit_gate
                         'stroke': 'black'
                         'fill': 'white'
                         'fill-opacity': 1
-                svg.image("http://frog.isima.fr/cgi-bin/bruno/tex2png--10.cgi?" + @txt, d, d).addTo(@dom).move(yc - d / 2, xc - d / 2)
+                svg.image("http://frog.isima.fr/cgi-bin/bruno/tex2png--10.cgi?" + @txt, d, d).addTo(@dom).move(yc - d / 2, xc - d / 2) if @txt != ""
                 @tab = insert_tab this, @cid, "gate", "#{@x} #{@y} #{@txt}" unless @tab
         apply: (map) ->
                 map[@x][@y] += "\\gate{#{@txt}}"
+        refmt: (mode) ->
+                ret = mode.point @x, @y
+                return false unless ret
+                [@x, @y] = ret
 
 class Qcircuit_multigate
         constructor: (@c, @x, @y, @txt) ->
@@ -213,12 +283,16 @@ class Qcircuit_multigate
                         'stroke': 'black'
                         'fill': 'white'
                         'fill-opacity': 1
-                svg.image("http://frog.isima.fr/cgi-bin/bruno/tex2png--10.cgi?" + @txt, d, d).addTo(@dom).move(xc - 10, (lc + uc) / 2 - 10)
+                svg.image("http://frog.isima.fr/cgi-bin/bruno/tex2png--10.cgi?" + @txt, d, d).addTo(@dom).move(xc - 10, (lc + uc) / 2 - 10) if @txt != ""
                 @tab = insert_tab this, @cid, "multigate", "#{@c} #{@x} #{@y} #{@txt}" unless @tab
         apply: (map) ->
                 map[@x][@c] += "\\multigate{#{@y - @x}}{#{@txt}}"
                 for d in [@x + 1 .. @y]
                         map[d][@c] += "\\ghost{#{@txt}}"
+        refmt: (mode) ->
+                ret = mode.line @x, @c, @y, @c
+                return false unless ret
+                [@x, @c, @y, _] = ret
 
 class Qcircuit_label
         constructor: (@x, @y, @io, @dirac, @txt) ->
@@ -233,11 +307,15 @@ class Qcircuit_label
                 d = sz_cfg['gate'] / 2
                 [xc, yc] = center @x, @y
                 @dom = svg.group()
-                svg.image("http://frog.isima.fr/cgi-bin/bruno/tex2png--10.cgi?" + @tex, d * 2, d * 2).addTo(@dom).move(yc - d, xc - d)
+                svg.image("http://frog.isima.fr/cgi-bin/bruno/tex2png--10.cgi?" + @tex, d * 2, d * 2).addTo(@dom).move(yc - d, xc - d) if @txt != ""
                 @tab = insert_tab this, @cid, "label", "#{@x} #{@y} #{@io} #{@dirac} #{@txt}" unless @tab
         apply: (map) ->
                 io_tex = if @io == "i" then "lstick" else "rstick"
                 map[@x][@y] += "\\#{io_tex}{\\#{@dirac}{#{@txt}}}"
+        refmt: (mode) ->
+                ret = mode.point @x, @y
+                return false unless ret
+                [@x, @y] = ret
 
 class Qcircuit_wire
         constructor: (@x1, @y1, @x2, @y2) ->
@@ -267,6 +345,10 @@ class Qcircuit_wire
                 else
                         [lx, rx] = if @x1 < @x2 then [@x1, @x2] else [@x2, @x1]
                         map[lx][@y1] += "\\cwx[#{rx - lx}] "
+        refmt: (mode) ->
+                ret = mode.line @x1, @y1, @x2, @y2
+                return false unless ret
+                [@x1, @y1, @x2, @y2] = ret
 
 class Qcircuit_meter
         constructor: (@x, @y) ->
@@ -294,6 +376,10 @@ class Qcircuit_meter
                 @tab = insert_tab this, @cid, "meter", "#{@x} #{@y}" unless @tab
         apply: (map) ->
                 map[@x][@y] += '\\meter '
+        refmt: (mode) ->
+                ret = mode.point @x, @y
+                return false unless ret
+                [@x, @y] = ret
 
 class Qcircuit_measure
         constructor: (@x, @y, @txt) ->
@@ -314,10 +400,14 @@ class Qcircuit_measure
                               L #{yc + 12} #{xc + d}
                               A #{d} #{d} 90 0 0 #{yc + d} #{xc - d}
                               Z"
-                svg.image("http://frog.isima.fr/cgi-bin/bruno/tex2png--10.cgi?" + @txt, d * 2, d * 2).addTo(@dom).move(yc - d, xc - d)
+                svg.image("http://frog.isima.fr/cgi-bin/bruno/tex2png--10.cgi?" + @txt, d * 2, d * 2).addTo(@dom).move(yc - d, xc - d) if @txt != ""
                 @tab = insert_tab this, @cid, "measure", "#{@x} #{@y} #{@txt}" unless @tab
         apply: (map) ->
                 map[@x][@y] += "\\measure{@txt}"
+        refmt: (mode) ->
+                ret = mode.point @x, @y
+                return false unless ret
+                [@x, @y] = ret
 
 class Qcircuit_measuretab
         constructor: (@x, @y, @txt) ->
@@ -332,10 +422,14 @@ class Qcircuit_measuretab
                         "stroke": "black"
                         "stroke-width": 2
                         "fill": "white"
-                svg.image("http://frog.isima.fr/cgi-bin/bruno/tex2png--10.cgi?" + @txt, d * 2, d * 2).addTo(@dom).move(yc - d, xc - d)
+                svg.image("http://frog.isima.fr/cgi-bin/bruno/tex2png--10.cgi?" + @txt, d * 2, d * 2).addTo(@dom).move(yc - d, xc - d) if @txt != ""
                 @tab = insert_tab this, @cid, "measuretab", "#{@x} #{@y} #{@txt}" unless @tab
         apply: (map) ->
                 map[@x][@y] += "\\measuretab{@txt} "
+        refmt: (mode) ->
+                ret = mode.point @x, @y
+                return false unless ret
+                [@x, @y] = ret
 
 class Qcircuit_measureD
         constructor: (@x, @y, @txt) ->
@@ -356,10 +450,14 @@ class Qcircuit_measureD
                               A #{12} #{12} 90 0 1 #{yc + 12} #{xc + 12}
                               L #{yc - 20} #{xc + 12}
                               Z"
-                svg.image("http://frog.isima.fr/cgi-bin/bruno/tex2png--10.cgi?" + @txt, d * 2 - 5, d * 2 - 5).addTo(@dom).move(yc - d + 5, xc - d + 5)
+                svg.image("http://frog.isima.fr/cgi-bin/bruno/tex2png--10.cgi?" + @txt, d * 2 - 5, d * 2 - 5).addTo(@dom).move(yc - d + 5, xc - d + 5) if @txt != ""
                 @tab = insert_tab this, @cid, "measureD", "#{@x} #{@y} #{@txt}" unless @tab
         apply: (map) ->
                 map[@x][@y] += "\\measureD{@txt} "
+        refmt: (mode) ->
+                ret = mode.point @x, @y
+                return false unless ret
+                [@x, @y] = ret
 
 class Qcircuit_multimeasure
         constructor: (@c, @x, @y, @txt) ->
@@ -389,12 +487,16 @@ class Qcircuit_multimeasure
                               L #{xc + r * 2} #{uc}
                               A #{r} #{r} 90 0 0 #{xc + r} #{uc - r}
                               Z"
-                svg.image("http://frog.isima.fr/cgi-bin/bruno/tex2png--10.cgi?" + @txt, d, d).addTo(@dom).move(xc - 10, (lc + uc) / 2 - 10)
+                svg.image("http://frog.isima.fr/cgi-bin/bruno/tex2png--10.cgi?" + @txt, d, d).addTo(@dom).move(xc - 10, (lc + uc) / 2 - 10) if @txt != ""
                 @tab = insert_tab this, @cid, "multimeasure", "#{@c} #{@x} #{@y} #{@txt}" unless @tab
         apply: (map) ->
                 map[@x][@c] += "\\multimeasure{#{@y - @x}}{#{@txt}}"
                 for d in [@x + 1 .. @y]
                         map[d][@c] += "\\ghost{#{@txt}}"
+        refmt: (mode) ->
+                ret = mode.line @x, @c, @y, @c
+                return false unless ret
+                [@x, @c, @y, _] = ret
 
 class Qcircuit_multimeasureD
         constructor: (@c, @x, @y, @txt) ->
@@ -422,12 +524,16 @@ class Qcircuit_multimeasureD
                               L #{xc + r * 2} #{uc}
                               A #{r} #{r} 90 0 0 #{xc + r} #{uc - r}
                               Z"
-                svg.image("http://frog.isima.fr/cgi-bin/bruno/tex2png--10.cgi?" + @txt, d, d).addTo(@dom).move(xc - 10, (lc + uc) / 2 - 10)
+                svg.image("http://frog.isima.fr/cgi-bin/bruno/tex2png--10.cgi?" + @txt, d, d).addTo(@dom).move(xc - 10, (lc + uc) / 2 - 10) if @txt != ""
                 @tab = insert_tab this, @cid, "multimeasureD", "#{@c} #{@x} #{@y} #{@txt}" unless @tab
         apply: (map) ->
                 map[@x][@c] += "\\multimeasureD{#{@y - @x}}{#{@txt}}"
                 for d in [@x + 1 .. @y]
                         map[d][@c] += "\\ghost{#{@txt}}"
+        refmt: (mode) ->
+                ret = mode.line @x, @c, @y, @c
+                return false unless ret
+                [@x, @c, @y, _] = ret
 
 class Qcircuit_component
         constructor: () ->
@@ -448,9 +554,14 @@ class Qcircuit_component
         add: (comp, redraw = true) ->
                 @components[comp.cid] = comp
                 @redraw()
-        ins_row: (x) ->
-                # for id, c of @components
-                #         c.alter x
+        refmt: (mode, pos) ->
+                refmt = ReFmt mode, pos
+                for id, c of @components
+                        c.tab.remove()
+                        c.tab = null
+                        unless c.refmt refmt
+                                delete @components[id]
+                @redraw()
 
 QC = new Qcircuit_component
 
@@ -483,16 +594,16 @@ class QueueEvent
                 clog "Queue Length #{@Q.length}"
         bind: (@func, @cnt) ->
                 @Q = []
-                # clog "new bind: #{@cnt}"
+                # clog "new bind: #{@cnt} #{@func}"
 
 Q = new QueueEvent
 
 drawer = $("#drawing")
 
 get_cur_rel_pos = (event) ->
-        # clog "#{event.pageX} - #{drawer.offset().left}"
-        x = parseInt(event.pageX) - drawer.offset().left
-        y = parseInt(event.pageY) - drawer.offset().top
+        # clog "#{event.pageX} - #{drawer.offset().left} - #{drawer.position().left}"
+        x = Math.round(parseInt(event.pageX) - drawer.offset().left)
+        y = Math.round(parseInt(event.pageY) - drawer.offset().top)
         return [x, y]
 
 click_event = (event) ->
@@ -510,7 +621,7 @@ drawer.mousemove (event) ->
         x2 = X.right(Bx)
         y1 = Y.left(By)
         y2 = Y.right(By)
-        clog "#{Bx} #{By}"
+        # clog "#{Bx} #{By}"
         dashed_box = draw.group()
         for [X1, Y1, X2, Y2] in [[x1, y1, x2, y1], [x1, y2, x2, y2], [x2, y1, x2, y2], [x1, y1, x1, y2]]
                 draw.line(Y1, X1, Y2, X2).addTo(dashed_box).attr
@@ -519,118 +630,63 @@ drawer.mousemove (event) ->
 drawer.css
         position: "absolute"
 
-window.add_black_dot = () ->
-        func = (arg) ->
-                [x1, y1] = arg[0]
-                [x2, y2] = arg[1]
-                if y1 == y2
-                        QC.add new Qcircuit_black_dot x1, y1, x2, y2
-        Q.bind func, 2
+btn_group_EC = $("#btn-group-EC")
 
-window.add_white_dot = () ->
-        func = (arg) ->
-                [x1, y1] = arg[0]
-                [x2, y2] = arg[1]
-                if y1 == y2
-                        QC.add new Qcircuit_white_dot x1, y1, x2, y2
-        Q.bind func, 2
+bind_button = (Qcircuit, btn, mode) ->
+        func = switch mode
+                when 1 then (arg) ->
+                        [x, y] = arg[0]
+                        QC.add new Qcircuit x, y, $('#gate').val()
+                when 2 then (arg) ->
+                        [x1, y1] = arg[0]
+                        [x2, y2] = arg[1]
+                        if y1 == y2 and x1 != x2
+                                QC.add new Qcircuit y1, x1, x2, $('#gate').val()
+                when 3 then (arg) ->
+                        [x1, y1] = arg[0]
+                        [x2, y2] = arg[1]
+                        if (y1 == y2 or x1 == x2) and ([x1, y1] != [x2, y2])
+                                QC.add new Qcircuit x1, y1, x2, y2
+                when 4 then (arg) ->
+                        [x, y] = arg[0]
+                        io = if $("#label-io").prop("checked") then "o" else "i"
+                        dirac = if $("#label-dirac").prop("checked") then "bra" else "ket"
+                        QC.add new Qcircuit x, y, io, dirac, $('#gate').val()
+        argc = if mode == 1 then 1 else 2
+        btn_group_EC.append("<button class='btn btn-primary' id='btn-#{btn}'>#{btn}</button>")
+        $("#btn-#{btn}").click () ->
+                Q.bind func, argc
 
-window.add_targ = () ->
-        func = (arg) ->
-                [x, y] = arg[0]
-                QC.add new Qcircuit_target x, y
-        Q.bind func, 1
+elec_elem = [
+        [Qcircuit_target        , 'target'        , 1],
+        [Qcircuit_qswap         , 'qswap'         , 1],
+        [Qcircuit_gate          , 'gate'          , 1], 
+        [Qcircuit_meter         , 'meter'         , 1], 
+        [Qcircuit_measure       , 'measure'       , 1], 
+        [Qcircuit_measuretab    , 'measuretab'    , 1], 
+        [Qcircuit_measureD      , 'measureD'      , 1], 
+        [Qcircuit_multigate     , 'multigate'     , 2], 
+        [Qcircuit_multimeasure  , 'multimeasure'  , 2], 
+        [Qcircuit_multimeasureD , 'multimeasureD' , 2], 
+        [Qcircuit_black_dot     , 'black-dot'     , 2],
+        [Qcircuit_white_dot     , 'white-dot'     , 2],
+        [Qcircuit_line          , 'line'          , 3], 
+        [Qcircuit_wire          , 'wire'          , 3],
+        [Qcircuit_label         , 'label'         , 4],
+]
 
-window.add_qswap = () ->
-        func = (arg) ->
-                [x, y] = arg[0]
-                QC.add new Qcircuit_qswap x, y
-        Q.bind func, 1
+for [Qcircuit, btn, argc] in elec_elem
+        bind_button Qcircuit, btn, argc
 
-window.add_gate = () ->
-        func = (arg) ->
-                [x, y] = arg[0]
-                QC.add new Qcircuit_gate x, y, $('#gate').val()
-        Q.bind func, 1
+btn_group_RC = $("#btn-group-RC")
+bind_RC_alter = (mode, txt) ->
+        btn_group_RC.append("<button class='btn btn-primary' id='btn-RC-#{mode}'>#{txt}</button>")
+        $("#btn-RC-#{mode}").click () ->
+                QC.refmt mode, parseInt $("#gate").val()
 
-window.add_meter = () ->
-        func = (arg) ->
-                [x, y] = arg[0]
-                QC.add new Qcircuit_meter x, y
-        Q.bind func, 1
-
-window.add_measure = () ->
-        func = (arg) ->
-                [x, y] = arg[0]
-                QC.add new Qcircuit_measure x, y, $('#gate').val()
-        Q.bind func, 1
-
-window.add_measuretab = () ->
-        func = (arg) ->
-                [x, y] = arg[0]
-                QC.add new Qcircuit_measuretab x, y, $('#gate').val()
-        Q.bind func, 1
-
-window.add_measureD = () ->
-        func = (arg) ->
-                [x, y] = arg[0]
-                QC.add new Qcircuit_measureD x, y, $('#gate').val()
-        Q.bind func, 1
-
-window.add_multigate = () ->
-        func = (arg) ->
-                [x1, y1] = arg[0]
-                [x2, y2] = arg[1]
-                if y1 == y2
-                        QC.add new Qcircuit_multigate y1, x1, x2, $('#gate').val()
-        Q.bind func, 2
-
-window.add_multimeasure = () ->
-        func = (arg) ->
-                [x1, y1] = arg[0]
-                [x2, y2] = arg[1]
-                if y1 == y2
-                        QC.add new Qcircuit_multimeasure y1, x1, x2, $('#gate').val()
-        Q.bind func, 2
-
-window.add_multimeasureD = () ->
-        func = (arg) ->
-                [x1, y1] = arg[0]
-                [x2, y2] = arg[1]
-                if y1 == y2
-                        QC.add new Qcircuit_multimeasureD y1, x1, x2, $('#gate').val()
-        Q.bind func, 2
-
-window.add_line = () ->
-        func = (arg) ->
-                [x1, y1] = arg[0]
-                [x2, y2] = arg[1]
-                if y1 == y2 or x1 == x2
-                        QC.add new Qcircuit_line x1, y1, x2, y2
-        Q.bind func, 2
-
-window.insert_row = () ->
-        func = (arg) ->
-                [x, y] = arg[0]
-                Q.ins_row x
-        Q.bind func, 1
-
-window.add_label = () ->
-        func = (arg) ->
-                [x, y] = arg[0]
-                # clog "" + $("#label-io").prop("checked") + " " + $("#label-dirac").attr('checked')
-                io = if $("#label-io").prop("checked") then "o" else "i"
-                dirac = if $("#label-dirac").prop("checked") then "bra" else "ket"
-                QC.add new Qcircuit_label x, y, io, dirac, $('#gate').val()
-        Q.bind func, 1
-
-window.add_wire = () ->
-        func = (arg) ->
-                [x1, y1] = arg[0]
-                [x2, y2] = arg[1]
-                if y1 == y2 or x1 == x2
-                        QC.add new Qcircuit_wire x1, y1, x2, y2
-        Q.bind func, 2
+for rc in ['r', 'c']
+        for ad in ['a', 'd']
+                bind_RC_alter (rc + ad), (rc + ad)
 
 class QcircuitGrid
         constructor: (@rows, @cols) ->
